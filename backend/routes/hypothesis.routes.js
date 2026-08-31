@@ -10,6 +10,10 @@ router.route('/')
   .get(hypothesisController.getHypothesesForCase)
   .post(authorize('Investigator', 'Admin'), hypothesisController.createHypothesis);
 
+// /api/hypotheses/:id
+router.route('/:id')
+  .get(hypothesisController.getHypothesis);
+
 // /api/hypotheses/:id/relationships
 router.route('/:id/relationships')
   .get(hypothesisController.getRelationships)

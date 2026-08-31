@@ -14,7 +14,8 @@ router.route('/:id')
   .get(caseController.getCase);
 
 router.route('/:id/status')
-  .put(authorize('Investigator', 'Reviewer', 'Admin'), caseController.updateCaseStatus);
+  .put(authorize('Investigator', 'Reviewer', 'Admin'), caseController.updateCaseStatus)
+  .patch(authorize('Investigator', 'Reviewer', 'Admin'), caseController.updateCaseStatus);
 
 router.route('/:caseId/relationships')
   .get(hypothesisController.getRelationshipsForCase);

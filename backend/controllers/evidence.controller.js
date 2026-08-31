@@ -104,10 +104,11 @@ exports.getEvidenceForCase = async (req, res, next) => {
 
 exports.addEvidence = async (req, res, next) => {
   try {
+    const caseId = req.params.caseId || req.body.caseId;
     if (mongoose.connection.readyState !== 1) {
       const newEv = {
         _id: 'ev_' + Date.now(),
-        caseId: req.params.caseId,
+        caseId,
         ...req.body,
         verificationState: req.body.verificationState || 'UNVERIFIED',
         confidenceScore: req.body.confidenceScore !== undefined ? req.body.confidenceScore : 50,
@@ -120,7 +121,7 @@ exports.addEvidence = async (req, res, next) => {
     }
     const evidence = await Evidence.create({
       ...req.body,
-      caseId: req.params.caseId,
+      caseId,
       uploadedBy: req.user._id
     });
     await logAudit(req.user._id, 'ADD_EVIDENCE', 'Evidence', evidence._id, { title: evidence.title, caseId: evidence.caseId });

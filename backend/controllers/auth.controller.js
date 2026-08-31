@@ -9,6 +9,9 @@ exports.login = async (req, res, next) => {
 
     if (mongoose.connection.readyState !== 1) {
       let user = memoryStore.users.find(u => u.username === username);
+      if (user && user.password && user.password !== password) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      }
       if (!user) {
         user = {
           _id: 'u_' + Date.now(),

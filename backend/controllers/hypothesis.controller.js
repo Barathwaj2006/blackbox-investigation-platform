@@ -22,12 +22,29 @@ exports.getHypothesesForCase = async (req, res, next) => {
   }
 };
 
+exports.getHypothesis = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      const hyp = memoryStore.hypotheses.find(h => String(h._id) === String(req.params.id));
+      if (!hyp) return res.status(404).json({ success: false, error: 'Hypothesis not found' });
+      return res.json({ success: true, data: hyp });
+    }
+    const hypothesis = await Hypothesis.findById(req.params.id)
+      .populate('createdBy', 'name username');
+    if (!hypothesis) return res.status(404).json({ success: false, error: 'Hypothesis not found' });
+    res.json({ success: true, data: hypothesis });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.createHypothesis = async (req, res, next) => {
   try {
+    const caseId = req.params.caseId || req.body.caseId;
     if (mongoose.connection.readyState !== 1) {
       const newHyp = {
         _id: 'hyp_' + Date.now(),
-        caseId: req.params.caseId,
+        caseId,
         ...req.body,
         score: 0,
         explainability: [],
@@ -40,7 +57,7 @@ exports.createHypothesis = async (req, res, next) => {
     }
     const hypothesis = await Hypothesis.create({
       ...req.body,
-      caseId: req.params.caseId,
+      caseId,
       createdBy: req.user._id
     });
     await logAudit(req.user._id, 'CREATE_HYPOTHESIS', 'Hypothesis', hypothesis._id, { title: hypothesis.title, caseId: hypothesis.caseId });

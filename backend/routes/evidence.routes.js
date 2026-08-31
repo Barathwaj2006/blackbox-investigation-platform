@@ -12,6 +12,7 @@ router.route('/')
 
 // /api/evidence/:id/verify
 router.route('/:id/verify')
-  .put(authorize('Investigator', 'Reviewer', 'Admin'), evidenceController.verifyEvidence);
+  .put(authorize('Investigator', 'Reviewer', 'Admin'), evidenceController.verifyEvidence)
+  .patch(authorize('Investigator', 'Reviewer', 'Admin'), evidenceController.verifyEvidence);
 
 module.exports = router;

@@ -9,7 +9,8 @@
     "build": "npm --prefix frontend run build",
     "build:frontend": "npm --prefix frontend run build",
     "start": "node backend/server.js",
-    "test": "node backend/test/smoke-test.js"
+    "lint": "npm test",
+    "test": "node backend/test/smoke-test.js && node backend/test/e2e-workflow-qa.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

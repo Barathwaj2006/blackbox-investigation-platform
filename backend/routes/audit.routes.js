@@ -6,6 +6,6 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 router.route('/')
-  .get(authorize('Reviewer', 'Admin'), auditController.getAuditLogs);
+  .get(authorize('Investigator', 'Reviewer', 'Admin'), auditController.getAuditLogs);
 
 module.exports = router;
