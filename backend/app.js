@@ -23,31 +23,25 @@ app.use(express.json());
 
 // Database connection middleware for serverless and local requests
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api') && req.path !== '/api/health') {
-    try {
-      await connectDB();
-    } catch (err) {
-      console.error('Database connection error in middleware:', err.message);
-      return res.status(500).json({ success: false, error: 'Database connection failed: ' + err.message });
-    }
+  if (req.path === '/api/health' || req.path === '/health') {
+    return next();
+  }
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('Database connection error in middleware:', err.message);
+    return res.status(500).json({ success: false, error: 'Database connection failed: ' + err.message });
   }
   next();
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/cases', caseRoutes);
-app.use('/api/evidence', evidenceRoutes);
-app.use('/api/cases/:caseId/evidence', evidenceRoutes);
-app.use('/api/cases/:caseId/hypotheses', hypothesisRoutes);
-app.use('/api/hypotheses', hypothesisRoutes);
-app.use('/api/audit', auditRoutes);
-
-app.get('/api/health', (req, res) => {
+// Health check endpoint
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.post('/api/admin/reset-demo', async (req, res) => {
+// Admin reset demo
+app.post(['/api/admin/reset-demo', '/admin/reset-demo'], async (req, res) => {
   try {
      const { seedDemo } = require('./seed');
      await seedDemo();
@@ -57,15 +51,38 @@ app.post('/api/admin/reset-demo', async (req, res) => {
   }
 });
 
+// API Routes mounted on both /api/* and /* to handle any Vercel rewrite pattern
+app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
+app.use('/api/cases', caseRoutes);
+app.use('/cases', caseRoutes);
+
+app.use('/api/evidence', evidenceRoutes);
+app.use('/evidence', evidenceRoutes);
+
+app.use('/api/cases/:caseId/evidence', evidenceRoutes);
+app.use('/cases/:caseId/evidence', evidenceRoutes);
+
+app.use('/api/cases/:caseId/hypotheses', hypothesisRoutes);
+app.use('/cases/:caseId/hypotheses', hypothesisRoutes);
+
+app.use('/api/hypotheses', hypothesisRoutes);
+app.use('/hypotheses', hypothesisRoutes);
+
+app.use('/api/audit', auditRoutes);
+app.use('/audit', auditRoutes);
+
 // API Error Handler
 app.use('/api', errorHandler);
+app.use(errorHandler);
 
 // Static Asset Serving & SPA Fallback for local standalone use
 const distPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(distPath));
 
 app.get('/{*splat}', (req, res) => {
-  if (!req.path.startsWith('/api/')) {
+  if (!req.path.startsWith('/api/') && !req.path.startsWith('/auth/') && !req.path.startsWith('/cases/') && !req.path.startsWith('/evidence/') && !req.path.startsWith('/hypotheses/') && !req.path.startsWith('/audit/')) {
     res.sendFile(path.join(distPath, 'index.html'));
   } else {
     res.status(404).json({ error: 'API route not found' });
