@@ -63,7 +63,7 @@ if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(distPath));
 
-  app.get('*', (req, res) => {
+  app.get('/{*splat}', (req, res) => {
     // Only fallback if the request isn't an API request
     if (!req.path.startsWith('/api/')) {
       res.sendFile(path.join(distPath, 'index.html'));
