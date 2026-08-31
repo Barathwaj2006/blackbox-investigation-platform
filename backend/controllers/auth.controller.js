@@ -1,18 +1,44 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { memoryStore } = require('../utils/memoryStore');
 
 exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
+
+    if (mongoose.connection.readyState !== 1) {
+      let user = memoryStore.users.find(u => u.username === username);
+      if (!user) {
+        user = {
+          _id: 'u_' + Date.now(),
+          username,
+          password: password || 'demo',
+          name: username.charAt(0).toUpperCase() + username.slice(1),
+          role: username === 'admin' ? 'Admin' : (username === 'reviewer' ? 'Reviewer' : 'Investigator')
+        };
+        memoryStore.users.push(user);
+      }
+      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+      return res.json({
+        success: true,
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          name: user.name,
+          role: user.role
+        }
+      });
+    }
     
-    // Demo login fast path
+    // Mongoose connected path
     let user = await User.findOne({ username });
     if (!user && process.env.NODE_ENV !== 'production') {
-       // Auto-create demo users if they don't exist
        user = await User.create({
          username,
          password: password || 'demo',
-         name: username,
+         name: username.charAt(0).toUpperCase() + username.slice(1),
          role: username === 'admin' ? 'Admin' : (username === 'reviewer' ? 'Reviewer' : 'Investigator')
        });
     }

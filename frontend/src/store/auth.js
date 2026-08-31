@@ -11,12 +11,20 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username, password) {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
-        const data = await response.json();
+        
+        const contentType = response.headers.get('content-type');
+        let data;
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          return { success: false, error: text || 'Invalid server response' };
+        }
         
         if (data.success) {
           this.user = data.user;
@@ -25,10 +33,10 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('token', data.token);
           return { success: true };
         } else {
-          return { success: false, error: data.error };
+          return { success: false, error: data.error || 'Authentication failed' };
         }
       } catch (err) {
-        return { success: false, error: 'Network error' };
+        return { success: false, error: err.message || 'Network error' };
       }
     },
     logout() {

@@ -1,0 +1,8 @@
+{
+  "name": "BlackBox Investigation Platform",
+  "description": "Digital Evidence Investigation Platform for case tracking, evidence logging, hypothesis scoring, and audit trails.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

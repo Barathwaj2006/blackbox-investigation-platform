@@ -2,12 +2,15 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const path = require('path');
+
 const authRoutes = require('./routes/auth.routes');
 const caseRoutes = require('./routes/case.routes');
 const evidenceRoutes = require('./routes/evidence.routes');
 const hypothesisRoutes = require('./routes/hypothesis.routes');
 const auditRoutes = require('./routes/audit.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const adminRoutes = require('./routes/admin.routes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -15,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cases', caseRoutes);
 app.use('/api/evidence', evidenceRoutes);
@@ -23,57 +26,54 @@ app.use('/api/cases/:caseId/evidence', evidenceRoutes);
 app.use('/api/cases/:caseId/hypotheses', hypothesisRoutes);
 app.use('/api/hypotheses', hypothesisRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes);
 
-// Basic route to test server
+// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({
+    status: 'ok',
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'in-memory-fallback'
+  });
 });
 
-// Error Handler
+// JSON 404 Handler for all API routes so HTML is never returned for /api/* calls
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+});
+
+// Serve frontend static files
+const frontendDist = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDist));
+
+// SPA fallback for all remaining non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
+
+// Global Error Handler
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
-  try {
-    let mongoUri = process.env.MONGODB_URI;
-    
-    // For hackathon/demo, we use MongoMemoryServer to avoid requiring local mongodb
-    const mongod = await MongoMemoryServer.create();
-    mongoUri = mongod.getUri();
-    console.log(`Using In-Memory MongoDB: ${mongoUri}`);
+  const mongoUri = process.env.MONGODB_URI;
 
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
-    
-    // Auto-seed for hackathon if no users exist
-    const User = require('./models/User');
-    const count = await User.countDocuments();
-    if (count === 0) {
-      console.log('Seeding demo database...');
-      const admin = await User.create({ username: 'admin', password: 'demo', name: 'Admin', role: 'Admin' });
-      const investigator = await User.create({ username: 'investigator', password: 'demo', name: 'Investigator', role: 'Investigator' });
-      
-      const Case = require('./models/Case');
-      const Evidence = require('./models/Evidence');
-      const Hypothesis = require('./models/Hypothesis');
-      const EvidenceRelationship = require('./models/EvidenceRelationship');
-      const { calculateHypothesisScore } = require('./utils/scoringEngine');
-
-      const c1 = await Case.create({ title: 'Operation Phantom', description: 'Sample case data', status: 'INVESTIGATING', createdBy: admin._id });
-      const e1 = await Evidence.create({ caseId: c1._id, title: 'Server Logs', verificationState: 'VERIFIED', confidenceScore: 90, uploadedBy: investigator._id });
-      const h1 = await Hypothesis.create({ caseId: c1._id, title: 'External Attack', createdBy: investigator._id });
-      await EvidenceRelationship.create({ hypothesisId: h1._id, evidenceId: e1._id, type: 'SUPPORT', strength: 8, createdBy: investigator._id });
-      await calculateHypothesisScore(h1._id);
+  if (mongoUri) {
+    try {
+      mongoose.set('bufferCommands', false);
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
+      console.log('Connected to MongoDB');
+    } catch (dbErr) {
+      console.warn('[AI Studio] MongoDB connection warning:', dbErr.message);
     }
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
+  } else {
+    console.log('[AI Studio] No MONGODB_URI provided — using in-memory demo storage');
   }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`BlackBox server listening on http://0.0.0.0:${PORT}`);
+  });
 }
 
 startServer();

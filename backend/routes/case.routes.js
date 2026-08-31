@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const caseController = require('../controllers/case.controller');
+const hypothesisController = require('../controllers/hypothesis.controller');
 const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
@@ -14,5 +15,8 @@ router.route('/:id')
 
 router.route('/:id/status')
   .put(authorize('Investigator', 'Reviewer', 'Admin'), caseController.updateCaseStatus);
+
+router.route('/:caseId/relationships')
+  .get(hypothesisController.getRelationshipsForCase);
 
 module.exports = router;
