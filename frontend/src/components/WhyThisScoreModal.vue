@@ -4,6 +4,13 @@
       <div class="flex justify-between items-start border-b border-gray-700 pb-3">
         <div>
           <div class="flex items-center space-x-2">
+            <button 
+              @click="$emit('close')" 
+              class="text-xs font-mono text-purple-400 hover:text-purple-300 font-bold flex items-center space-x-1 mr-2 px-2 py-0.5 rounded bg-gray-900 border border-gray-700 transition"
+            >
+              <span>←</span>
+              <span>Back to Hypotheses</span>
+            </button>
             <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 text-purple-400 border border-gray-700 font-bold">
               ID: {{ hypothesis._id }}
             </span>
@@ -11,7 +18,7 @@
           </div>
           <h3 class="text-xl font-bold text-white mt-1">{{ hypothesis.title }}</h3>
         </div>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-white text-xl font-bold p-1">✕</button>
+        <button @click="$emit('close')" class="text-gray-400 hover:text-white text-xl font-bold p-1" title="Close">✕</button>
       </div>
 
       <!-- Score Header Banner -->

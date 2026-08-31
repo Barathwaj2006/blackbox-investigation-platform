@@ -1,10 +1,17 @@
 <template>
   <div class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
     <div class="bg-gray-800 border border-gray-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto">
-      <!-- Drawer Header -->
+      <!-- Drawer Header with explicit Back Navigation -->
       <div class="flex justify-between items-start border-b border-gray-700 pb-3">
         <div class="space-y-1">
           <div class="flex items-center space-x-2">
+            <button 
+              @click="$emit('close')" 
+              class="text-xs font-mono text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1 mr-2 px-2 py-0.5 rounded bg-gray-900 border border-gray-700 transition"
+            >
+              <span>←</span>
+              <span>Back to Evidence</span>
+            </button>
             <span class="text-xs font-mono px-2.5 py-0.5 rounded bg-gray-900 text-blue-400 border border-gray-700 font-bold">
               ID: {{ evidence._id }}
             </span>
@@ -12,9 +19,9 @@
               {{ evidence.verificationState || 'UNVERIFIED' }}
             </span>
           </div>
-          <h3 class="text-xl font-bold text-white">{{ evidence.title }}</h3>
+          <h3 class="text-xl font-bold text-white pt-1">{{ evidence.title }}</h3>
         </div>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-white text-xl font-bold p-1">✕</button>
+        <button @click="$emit('close')" class="text-gray-400 hover:text-white text-xl font-bold p-1" title="Close">✕</button>
       </div>
 
       <!-- SECTION 1: IDENTITY -->

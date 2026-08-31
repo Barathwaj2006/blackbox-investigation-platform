@@ -517,7 +517,15 @@
     <!-- ==================== 3. TAB 1: EVIDENCE COLLECTION ==================== -->
     <div v-if="tab === 'evidence'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-        <div>
+        <div class="space-y-1">
+          <div class="flex items-center space-x-2 text-xs font-mono">
+            <button @click="tab = 'overview'" class="text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1">
+              <span>←</span>
+              <span>Back to Overview</span>
+            </button>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-400">Evidence</span>
+          </div>
           <h2 class="text-lg font-bold text-white">Evidence Collection & Verification Dossier</h2>
           <p class="text-xs text-gray-400">Catalog, inspect, verify, and link forensic artifacts, digital logs, and physical evidence.</p>
         </div>
@@ -630,7 +638,15 @@
     <!-- ==================== 4. TAB 2: HYPOTHESES & EXPLAINABILITY ==================== -->
     <div v-if="tab === 'hypotheses'" class="space-y-6">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-        <div>
+        <div class="space-y-1">
+          <div class="flex items-center space-x-2 text-xs font-mono">
+            <button @click="tab = 'overview'" class="text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1">
+              <span>←</span>
+              <span>Back to Overview</span>
+            </button>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-400">Hypotheses</span>
+          </div>
           <h2 class="text-lg font-bold text-white">Competing Hypotheses & Intelligence Analysis</h2>
           <p class="text-xs text-gray-400">Ranked competing theories scored through mathematical evidence links (SUPPORT / CONTRADICT).</p>
         </div>
@@ -690,6 +706,14 @@
 
     <!-- ==================== TAB 3: EVIDENCE MAP (GRAPH) ==================== -->
     <div v-if="tab === 'map'" class="space-y-4">
+      <div class="flex items-center space-x-2 text-xs font-mono">
+        <button @click="tab = 'overview'" class="text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1">
+          <span>←</span>
+          <span>Back to Overview</span>
+        </button>
+        <span class="text-slate-600">/</span>
+        <span class="text-slate-400">Evidence Map</span>
+      </div>
       <EvidenceMapGraph
         :evidence="evidence"
         :hypotheses="hypotheses"
@@ -703,7 +727,15 @@
     <!-- ==================== TAB 4: INVESTIGATION TIMELINE ==================== -->
     <div v-if="tab === 'timeline'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-        <div>
+        <div class="space-y-1">
+          <div class="flex items-center space-x-2 text-xs font-mono">
+            <button @click="tab = 'overview'" class="text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1">
+              <span>←</span>
+              <span>Back to Overview</span>
+            </button>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-400">Timeline</span>
+          </div>
           <h2 class="text-lg font-bold text-white">Investigation Timeline & Audit Trail</h2>
           <p class="text-xs text-gray-400">Chronological history of case mutations, evidence additions, verification cycles, and hypothesis formulation events.</p>
         </div>
@@ -767,7 +799,15 @@
     <!-- ==================== TAB 5: CASE AUDIT LOG ==================== -->
     <div v-if="tab === 'audit'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-        <div>
+        <div class="space-y-1">
+          <div class="flex items-center space-x-2 text-xs font-mono">
+            <button @click="tab = 'overview'" class="text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1">
+              <span>←</span>
+              <span>Back to Overview</span>
+            </button>
+            <span class="text-slate-600">/</span>
+            <span class="text-slate-400">Audit Trail</span>
+          </div>
           <h2 class="text-lg font-bold text-white">Immutable Case Audit Logs</h2>
           <p class="text-xs text-gray-400">Forensic, tamper-evident audit records specific to this case identifier.</p>
         </div>
