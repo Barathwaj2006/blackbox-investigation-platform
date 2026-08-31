@@ -1,48 +1,37 @@
-# Deployment Guide
+﻿# Deployment Guide
 
-BlackBox is designed as a decoupled architecture but can be easily deployed as a single unified service (where Express serves the compiled Vue static assets) to simplify production hosting.
+BlackBox is designed as a unified full-stack architecture running entirely on **Vercel** with **MongoDB Atlas** for persistent storage.
 
-## Current Hackathon Architecture
-For demonstration, BlackBox utilizes:
-- **Vue 3 / Vite** for the frontend dev server (port 5173).
-- **Express.js** for the backend REST API (port 5000).
-- **mongodb-memory-server** for instant, zero-config data persistence.
+## Production Architecture: Vercel + MongoDB Atlas
 
-## Production Single-Service Deployment
-
-To deploy BlackBox to a provider like Render, Koyeb, or Google Cloud Run, we recommend serving the frontend from the Express backend.
+```
+User (Browser)
+      │
+      ▼
+   Vercel
+   ├── Vue 3 + Vite Frontend (Static CDN)
+   └── Express.js Backend API (Serverless Functions via /api/*)
+             │
+             ▼
+      MongoDB Atlas
+```
 
 ### 1. Database Provisioning
 Provision a MongoDB Atlas cluster and obtain your connection string.
+Ensure your Atlas Network Access allows connections (`0.0.0.0/0` for serverless environments).
 
-### 2. Environment Variables
-Ensure the host environment is configured with:
-```bash
-NODE_ENV=production
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/blackbox?retryWrites=true&w=majority
-JWT_SECRET=your_secure_random_string_here
-PORT=8080
-```
+### 2. Vercel Environment Variables
+Configure the following in **Vercel Project Settings → Environment Variables**:
 
-### 3. Build the Application
-The repository uses a root `package.json` to orchestrate builds automatically:
-```bash
-npm install
-npm run build
-```
+| Variable | Value | Description |
+|---|---|---|
+| `NODE_ENV` | `production` | Production environment flag |
+| `MONGODB_URI` | `mongodb+srv://<user>:<password>@cluster...` | MongoDB Atlas Connection String |
+| `JWT_SECRET` | `<secure-random-string>` | Key for signing JWT authentication tokens |
 
-### 4. Start the Server
-```bash
-npm start
-```
+### 3. Automatic Deployment
+Pushing to the `main` branch automatically triggers Vercel to build the Vite frontend and bundle the Express API serverless functions via `vercel.json`.
 
-## Recommended Platform: Render
-
-BlackBox is pre-configured for a single-service Web Service deployment on Render:
-
-1. Connect your GitHub repository.
-2. Ensure environment is set to `Node`.
-3. Build Command: `npm install && npm run build`
-4. Start Command: `npm start`
-5. Add your Environment Variables (`MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`).
-- **Google Cloud Run**: Containerize using a standard Node.js Dockerfile that builds the frontend and copies `dist/` before starting Express.
+- **Build Command**: `npm run build`
+- **Output Directory**: `frontend/dist`
+- **API Entrypoint**: `api/index.js`

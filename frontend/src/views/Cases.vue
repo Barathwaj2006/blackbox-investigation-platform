@@ -105,7 +105,7 @@ const newCase = ref({ title: '', description: '' });
 const fetchCases = async () => {
   loading.value = true;
   try {
-    const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/cases', {
+    const res = await fetch('/api/cases', {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     });
     const data = await res.json();
@@ -122,7 +122,7 @@ const fetchCases = async () => {
 const createCase = async () => {
   creating.value = true;
   try {
-    const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/cases', {
+    const res = await fetch('/api/cases', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -156,6 +156,7 @@ const statusClass = (status) => {
 
 onMounted(fetchCases);
 </script>
+
 
 
 

@@ -44,7 +44,7 @@ const loading = ref(true);
 
 const fetchLogs = async () => {
   try {
-    const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/audit', {
+    const res = await fetch('/api/audit', {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     });
     const data = await res.json();
@@ -65,6 +65,7 @@ const formatTime = (isoString) => {
 
 onMounted(fetchLogs);
 </script>
+
 
 
 
