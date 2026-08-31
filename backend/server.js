@@ -19,15 +19,11 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 
 const app = express();
 
-// CORS configuration (allow all in dev, but strictly rely on same-origin in prod)
+// CORS configuration for split deployment (Vercel Frontend -> Render Backend)
 if (process.env.NODE_ENV !== 'production') {
   app.use(cors());
 } else {
-  // In production, the frontend and backend share the same origin, 
-  // so cross-origin is generally not needed. We can use a restrictive CORS policy if we want, 
-  // or simply not mount cors() broadly to prevent external access.
-  // We'll mount it with restricted options just in case specific routes need it, but mostly we rely on same-origin.
-  app.use(cors({ origin: false })); 
+  app.use(cors({ origin: process.env.FRONTEND_URL || '*' })); 
 }
 
 app.use(express.json());
@@ -81,6 +77,10 @@ async function startServer() {
     
     // Fallback to MongoMemoryServer only if no URI is provided (e.g. local dev)
     if (!mongoUri) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('FATAL: MONGODB_URI environment variable is missing in production. Cannot use MongoMemoryServer in production.');
+        process.exit(1);
+      }
       console.log('No MONGODB_URI provided. Starting in-memory fallback...');
       const mongod = await MongoMemoryServer.create();
       mongoUri = mongod.getUri();

@@ -509,9 +509,9 @@ const fetchCaseData = async () => {
   try {
     const h = { 'Authorization': `Bearer ${authStore.token}` };
     const [caseRes, evRes, hypRes] = await Promise.all([
-      fetch(`/api/cases/${route.params.id}`, { headers: h }),
-      fetch(`/api/cases/${route.params.id}/evidence`, { headers: h }),
-      fetch(`/api/cases/${route.params.id}/hypotheses`, { headers: h })
+      fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}`, { headers: h }),
+      fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}/evidence`, { headers: h }),
+      fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}/hypotheses`, { headers: h })
     ]);
     
     const [caseData, evData, hypData] = await Promise.all([caseRes.json(), evRes.json(), hypRes.json()]);
@@ -522,7 +522,7 @@ const fetchCaseData = async () => {
     // Fetch all relationships
     const allRels = [];
     for (const hyp of hypotheses.value) {
-       const res = await fetch(`/api/hypotheses/${hyp._id}/relationships`, { headers: h });
+       const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/hypotheses/${hyp._id}/relationships`, { headers: h });
        const d = await res.json();
        if (d.success) allRels.push(...d.data);
     }
@@ -538,7 +538,7 @@ const fetchCaseData = async () => {
 
 const fetchTimeline = async () => {
   try {
-     const res = await fetch(`/api/cases/${route.params.id}/timeline`, {
+     const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}/timeline`, {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
      });
      const data = await res.json();
@@ -550,7 +550,7 @@ const fetchTimeline = async () => {
 
 const updateStatus = async () => {
   try {
-    await fetch(`/api/cases/${route.params.id}/status`, {
+    await fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}/status`, {
       method: 'PUT',
       headers: headers.value,
       body: JSON.stringify({ status: caseItem.value.status })
@@ -573,7 +573,7 @@ const executeResolveCase = async () => {
 const createEvidence = async () => {
    creatingAction.value = true;
    try {
-      const res = await fetch(`/api/cases/${route.params.id}/evidence`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}/evidence`, {
          method: 'POST',
          headers: headers.value,
          body: JSON.stringify(newEvidence.value)
@@ -594,7 +594,7 @@ const createEvidence = async () => {
 
 const verifyEvidence = async (id, state) => {
   try {
-     await fetch(`/api/evidence/${id}/verify`, {
+     await fetch(`${import.meta.env.VITE_API_URL || ""}/api/evidence/${id}/verify`, {
        method: 'PUT',
        headers: headers.value,
        body: JSON.stringify({ verificationState: state })
@@ -612,7 +612,7 @@ const executeConfirmedAction = async () => {
    if(!actionConfirm.value) return;
    const { id, type, state } = actionConfirm.value;
    if(type === 'evidence') {
-      await fetch(`/api/evidence/${id}/verify`, {
+      await fetch(`${import.meta.env.VITE_API_URL || ""}/api/evidence/${id}/verify`, {
          method: 'PUT',
          headers: headers.value,
          body: JSON.stringify({ verificationState: state })
@@ -626,7 +626,7 @@ const executeConfirmedAction = async () => {
 const createHypothesis = async () => {
    creatingAction.value = true;
    try {
-      const res = await fetch(`/api/cases/${route.params.id}/hypotheses`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/cases/${route.params.id}/hypotheses`, {
          method: 'POST',
          headers: headers.value,
          body: JSON.stringify(newHypothesis.value)
@@ -653,7 +653,7 @@ const openLinkFlow = (ev) => {
 const submitLink = async () => {
    creatingAction.value = true;
    try {
-      const res = await fetch(`/api/hypotheses/${linkForm.value.hypothesisId}/relationships`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/hypotheses/${linkForm.value.hypothesisId}/relationships`, {
          method: 'POST',
          headers: headers.value,
          body: JSON.stringify({
@@ -786,3 +786,6 @@ const formatEventDescription = (ev) => {
 
 onMounted(fetchCaseData);
 </script>
+
+
+
