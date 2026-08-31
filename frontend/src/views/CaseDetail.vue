@@ -28,57 +28,54 @@
     </div>
 
     <!-- ==================== 1. CASE HEADER ==================== -->
-    <div class="bg-gray-800/95 border border-gray-700 rounded-xl p-6 shadow-xl relative overflow-hidden">
-      <!-- Ambient decorative glow -->
-      <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-
+    <div class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
       <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
         <div class="space-y-2 flex-1">
           <!-- Top metadata row -->
-          <div class="flex flex-wrap items-center gap-2.5">
-            <span class="font-mono text-xs px-2.5 py-0.5 rounded bg-gray-900 text-blue-400 border border-gray-700 font-semibold tracking-wider">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-mono text-[11px] px-2.5 py-0.5 rounded bg-[#0D1322] text-blue-400 border border-slate-700 font-bold tracking-wider">
               ID: {{ caseItem._id }}
             </span>
-            <span :class="priorityBadgeClass(computedPriority)" class="text-xs px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
+            <span :class="priorityBadgeClass(computedPriority)" class="text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
               {{ computedPriority }} PRIORITY
             </span>
-            <span :class="statusBadgeClass(caseItem.status)" class="text-xs px-3 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+            <span :class="statusBadgeClass(caseItem.status)" class="text-[10px] px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
               {{ caseItem.status }}
             </span>
-            <span class="text-xs text-gray-400 font-mono flex items-center space-x-1">
-              <span>👤 Investigator:</span>
-              <strong class="text-gray-200">{{ investigatorName }}</strong>
+            <span class="text-xs text-slate-400 font-mono flex items-center space-x-1 pl-1">
+              <span>Lead:</span>
+              <strong class="text-slate-200">{{ investigatorName }}</strong>
             </span>
           </div>
 
           <!-- Case Title -->
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+          <h1 class="text-xl sm:text-2xl font-black text-white tracking-wide font-mono uppercase leading-tight">
             {{ caseItem.title }}
           </h1>
 
           <!-- Case Scope / Description -->
-          <p class="text-gray-300 text-sm max-w-4xl leading-relaxed">
+          <p class="text-slate-300 text-xs sm:text-sm max-w-4xl leading-relaxed">
             {{ caseItem.description || 'No detailed scope summary specified for this case dossier.' }}
           </p>
 
           <!-- Timeline metadata -->
-          <div class="flex flex-wrap items-center gap-4 text-xs text-gray-400 pt-1 font-mono">
-            <span>Opened: <strong class="text-gray-300">{{ formatDateTime(caseItem.createdAt) }}</strong></span>
+          <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400 pt-1 font-mono">
+            <span>Opened: <strong class="text-slate-300">{{ formatDateTime(caseItem.createdAt) }}</strong></span>
             <span v-if="caseItem.updatedAt && caseItem.updatedAt !== caseItem.createdAt">
-              Last Mutation: <strong class="text-gray-300">{{ formatDateTime(caseItem.updatedAt) }}</strong>
+              Last Mutation: <strong class="text-slate-300">{{ formatDateTime(caseItem.updatedAt) }}</strong>
             </span>
           </div>
         </div>
 
         <!-- Lifecycle Control & Case Attention Indicator -->
-        <div class="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 w-full lg:w-auto self-stretch lg:self-auto border-t lg:border-t-0 border-gray-700/80 pt-4 lg:pt-0">
-          <div class="bg-gray-900/90 border border-gray-700 p-3 rounded-lg flex items-center justify-between sm:justify-start space-x-3 w-full lg:w-auto shadow-inner">
-            <label class="text-xs text-gray-400 uppercase font-semibold tracking-wider whitespace-nowrap">Case Status:</label>
+        <div class="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 w-full lg:w-auto self-stretch lg:self-auto border-t lg:border-t-0 border-slate-800 pt-4 lg:pt-0">
+          <div class="bg-[#0D1322] border border-slate-700 p-2.5 rounded-lg flex items-center justify-between sm:justify-start space-x-3 w-full lg:w-auto shadow-inner">
+            <label class="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider whitespace-nowrap">Case Status:</label>
             <select 
               v-model="caseItem.status" 
               @change="updateStatus" 
               :disabled="statusUpdating"
-              class="bg-gray-800 text-white border border-gray-600 rounded px-3 py-1 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              class="bg-[#0B0F19] text-white border border-slate-600 rounded px-2.5 py-1 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
             >
               <option value="DRAFT">DRAFT</option>
               <option value="OPEN">OPEN</option>
@@ -90,44 +87,44 @@
           </div>
 
           <!-- Prominent Health / Attention Status Badge -->
-          <div :class="caseHealthBoxClass" class="w-full lg:w-auto px-3.5 py-2 rounded-lg border text-xs flex items-center justify-between space-x-3">
+          <div :class="caseHealthBoxClass" class="w-full lg:w-auto px-3.5 py-1.5 rounded-lg border text-xs flex items-center justify-between space-x-3 font-mono">
             <div class="flex items-center space-x-2">
               <span class="w-2 h-2 rounded-full animate-pulse" :class="caseHealthDotClass"></span>
-              <span class="font-bold">{{ caseHealthText }}</span>
+              <span class="font-bold text-[11px]">{{ caseHealthText }}</span>
             </div>
-            <span class="text-[11px] font-mono opacity-80">{{ attentionItems.length }} alerts</span>
+            <span class="text-[10px] opacity-80">{{ attentionItems.length }} alerts</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- ==================== 6. QUICK ACTIONS TOOLBAR ==================== -->
-    <div class="bg-gray-900/90 border border-gray-700/80 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+    <div class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
       <div class="flex items-center space-x-2">
-        <span class="text-xs font-bold uppercase tracking-wider text-gray-400 px-1">Actions:</span>
+        <span class="text-[10px] font-bold uppercase font-mono tracking-wider text-slate-400 px-1">Actions:</span>
         <div class="flex flex-wrap gap-2">
           <button 
             @click="openAddEvidenceModal" 
-            class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow"
+            class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 shadow-md shadow-blue-900/30"
           >
             <span>+ Add Evidence</span>
           </button>
           <button 
             @click="openCreateHypothesisModal" 
-            class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow"
+            class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 shadow-md shadow-purple-900/30"
           >
             <span>+ Create Hypothesis</span>
           </button>
           <button 
             v-if="hypotheses.length > 0 && evidence.length > 0"
             @click="openLinkEvidenceModal(null)" 
-            class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 shadow-md shadow-indigo-900/30"
           >
             <span>🔗 Link Evidence</span>
           </button>
           <button 
             @click="quickReviewPendingEvidence" 
-            class="bg-amber-600/80 hover:bg-amber-600 text-amber-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 border border-amber-500/30"
+            class="bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 border border-amber-500/40"
           >
             <span>⚡ Review Evidence ({{ unverifiedEvidenceCount }})</span>
           </button>
@@ -138,58 +135,53 @@
       <button 
         @click="advanceCaseLifecycle" 
         :disabled="statusUpdating || caseItem.status === 'RESOLVED' || caseItem.status === 'ARCHIVED'"
-        class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 disabled:opacity-40"
+        class="bg-[#0D1322] hover:bg-slate-800 text-slate-200 border border-slate-700 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 disabled:opacity-40 font-mono"
       >
         <span>Advance Stage ➔</span>
       </button>
     </div>
 
     <!-- ==================== 8. CASE NAVIGATION TABS ==================== -->
-    <div class="border-b border-gray-700">
+    <div class="border-b border-slate-800">
       <nav class="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
         <button 
           @click="tab = 'overview'" 
-          :class="[tab === 'overview' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+          :class="[tab === 'overview' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600', 'whitespace-nowrap py-2.5 px-1 border-b-2 font-mono text-xs uppercase tracking-wider flex items-center space-x-2 transition-colors']"
         >
-          <span>Investigation Overview</span>
-          <span v-if="attentionItems.length > 0" class="bg-amber-900/80 text-amber-300 border border-amber-700 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+          <span>Overview</span>
+          <span v-if="attentionItems.length > 0" class="bg-amber-950 text-amber-300 border border-amber-800 text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">
             {{ attentionItems.length }}
           </span>
         </button>
         <button 
           @click="tab = 'evidence'" 
-          :class="[tab === 'evidence' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+          :class="[tab === 'evidence' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600', 'whitespace-nowrap py-2.5 px-1 border-b-2 font-mono text-xs uppercase tracking-wider flex items-center space-x-2 transition-colors']"
         >
-          <span>Evidence Collection</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ evidence.length }}</span>
+          <span>Evidence ({{ evidence.length }})</span>
         </button>
         <button 
           @click="tab = 'hypotheses'" 
-          :class="[tab === 'hypotheses' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+          :class="[tab === 'hypotheses' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600', 'whitespace-nowrap py-2.5 px-1 border-b-2 font-mono text-xs uppercase tracking-wider flex items-center space-x-2 transition-colors']"
         >
-          <span>Competing Hypotheses</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ hypotheses.length }}</span>
+          <span>Hypotheses ({{ hypotheses.length }})</span>
         </button>
         <button 
           @click="tab = 'map'" 
-          :class="[tab === 'map' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+          :class="[tab === 'map' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600', 'whitespace-nowrap py-2.5 px-1 border-b-2 font-mono text-xs uppercase tracking-wider flex items-center space-x-2 transition-colors']"
         >
-          <span>Interactive Evidence Map</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ caseRelationships.length }}</span>
+          <span>Evidence Map</span>
         </button>
         <button 
           @click="tab = 'timeline'" 
-          :class="[tab === 'timeline' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+          :class="[tab === 'timeline' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600', 'whitespace-nowrap py-2.5 px-1 border-b-2 font-mono text-xs uppercase tracking-wider flex items-center space-x-2 transition-colors']"
         >
           <span>Timeline Stream</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ timelineLogs.length }}</span>
         </button>
         <button 
           @click="tab = 'audit'" 
-          :class="[tab === 'audit' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+          :class="[tab === 'audit' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600', 'whitespace-nowrap py-2.5 px-1 border-b-2 font-mono text-xs uppercase tracking-wider flex items-center space-x-2 transition-colors']"
         >
-          <span>Case Audit Log</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ caseAuditLogs.length }}</span>
+          <span>Audit Trail</span>
         </button>
       </nav>
     </div>

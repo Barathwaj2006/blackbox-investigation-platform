@@ -1,23 +1,23 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
       <div>
         <div class="flex items-center space-x-3">
-          <h1 class="text-2xl font-bold text-white tracking-wide">SYSTEM AUDIT TRAIL</h1>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
+          <h1 class="text-xl sm:text-2xl font-black text-white tracking-wide uppercase font-mono">SYSTEM AUDIT TRAIL</h1>
+          <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 text-[11px] font-mono font-bold tracking-wider">
             IMMUTABLE LOG
           </span>
         </div>
-        <p class="text-gray-400 text-sm mt-1">Tamper-evident operational event log tracking every case modification, evidence verification, and scoring calculation.</p>
+        <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Tamper-evident operational event log tracking every case modification, evidence verification, and scoring calculation.</p>
       </div>
 
       <button 
         @click="fetchLogs(1)" 
         :disabled="loading"
-        class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3.5 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 self-start md:self-auto"
+        class="bg-[#0B0F19] hover:bg-slate-800 text-slate-200 border border-slate-700/80 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-2 self-start md:self-auto shadow-sm"
       >
-        <svg :class="{ 'animate-spin': loading }" class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg :class="{ 'animate-spin': loading }" class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
         </svg>
         <span>Refresh Feed</span>
@@ -25,32 +25,32 @@
     </div>
 
     <!-- Search & Filter Controls -->
-    <div class="bg-gray-800/80 p-4 rounded-lg border border-gray-700 flex flex-col md:flex-row gap-3 items-center justify-between">
+    <div class="bg-[#0B0F19] p-3.5 rounded-xl border border-slate-800/90 flex flex-col md:flex-row gap-3 items-center justify-between shadow-sm">
       <!-- Search Input -->
       <div class="w-full md:w-1/2 relative">
         <input 
           v-model="searchQuery" 
           @input="onSearchInput"
           type="text" 
-          placeholder="Search by actor, action type, target ID, or keyword..." 
-          class="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+          placeholder="Filter by actor, action type, target ID, or keyword..." 
+          class="w-full bg-[#0D1322] border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
         />
-        <svg class="w-4 h-4 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
 
       <!-- Filters -->
-      <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+      <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
         <!-- Action Filter -->
-        <div class="flex items-center space-x-2">
-          <label class="text-xs text-gray-400 uppercase font-semibold">Action:</label>
+        <div class="flex items-center space-x-1.5">
+          <label class="text-[10px] text-slate-400 uppercase font-mono font-bold">Action:</label>
           <select 
             v-model="actionFilter" 
             @change="fetchLogs(1)"
-            class="bg-gray-900 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+            class="bg-[#0D1322] border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
           >
-            <option value="">All Actions</option>
+            <option value="">ALL ACTIONS</option>
             <option value="CREATE_CASE">CREATE_CASE</option>
             <option value="UPDATE_CASE_STATUS">UPDATE_CASE_STATUS</option>
             <option value="ADD_EVIDENCE">ADD_EVIDENCE</option>
@@ -61,14 +61,14 @@
         </div>
 
         <!-- Entity Type Filter -->
-        <div class="flex items-center space-x-2">
-          <label class="text-xs text-gray-400 uppercase font-semibold">Target Entity:</label>
+        <div class="flex items-center space-x-1.5">
+          <label class="text-[10px] text-slate-400 uppercase font-mono font-bold">Target:</label>
           <select 
             v-model="entityFilter" 
             @change="fetchLogs(1)"
-            class="bg-gray-900 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+            class="bg-[#0D1322] border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
           >
-            <option value="">All Entities</option>
+            <option value="">ALL ENTITIES</option>
             <option value="Case">Case</option>
             <option value="Evidence">Evidence</option>
             <option value="Hypothesis">Hypothesis</option>
@@ -80,58 +80,55 @@
         <button 
           v-if="searchQuery || actionFilter || entityFilter"
           @click="resetFilters" 
-          class="text-xs text-gray-400 hover:text-white px-2 py-2 underline"
+          class="text-xs text-slate-400 hover:text-white px-2 py-1 underline font-mono"
         >
-          Reset
+          Clear
         </button>
       </div>
     </div>
 
     <!-- Logs Table -->
-    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden shadow-lg">
-      <div v-if="loading" class="py-16 text-center text-gray-400 flex flex-col items-center justify-center space-y-3">
-        <svg class="animate-spin h-7 w-7 text-blue-500" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg>
-        <span class="text-sm">Fetching audit trail records...</span>
+    <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 overflow-hidden shadow-sm">
+      <div v-if="loading" class="py-20 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
+        <div class="w-7 h-7 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+        <span class="text-xs font-mono text-slate-400">Fetching audit trail records...</span>
       </div>
 
-      <div v-else-if="logs.length === 0" class="py-12 text-center text-gray-400 text-sm">
+      <div v-else-if="logs.length === 0" class="py-12 text-center text-slate-500 text-xs font-mono">
         No audit events matching current criteria.
       </div>
 
       <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-700">
-          <thead class="bg-gray-900/90 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+        <table class="min-w-full divide-y divide-slate-800">
+          <thead class="bg-[#0D1322] text-slate-400 text-[10px] font-mono font-bold uppercase tracking-wider">
             <tr>
-              <th class="px-6 py-3.5 text-left">Timestamp</th>
-              <th class="px-6 py-3.5 text-left">Actor</th>
-              <th class="px-6 py-3.5 text-left">Action</th>
-              <th class="px-6 py-3.5 text-left">Target Entity</th>
-              <th class="px-6 py-3.5 text-left">Mutation Context / Details</th>
+              <th class="px-5 py-3 text-left">Timestamp</th>
+              <th class="px-5 py-3 text-left">Actor</th>
+              <th class="px-5 py-3 text-left">Action</th>
+              <th class="px-5 py-3 text-left">Target Entity</th>
+              <th class="px-5 py-3 text-left">Mutation Context / Details</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-700/60 text-sm">
-            <tr v-for="log in logs" :key="log._id" class="hover:bg-gray-750 transition">
-              <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">
+          <tbody class="divide-y divide-slate-850 text-xs">
+            <tr v-for="log in logs" :key="log._id" class="hover:bg-slate-900/60 transition">
+              <td class="px-5 py-3.5 whitespace-nowrap text-slate-400 font-mono text-[11px]">
                 {{ formatDateTime(log.createdAt) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="font-medium text-white">{{ log.user?.name || log.user?.username || 'Agent' }}</div>
-                <div class="text-xs text-gray-400 font-mono">{{ log.user?.role || 'System' }}</div>
+              <td class="px-5 py-3.5 whitespace-nowrap">
+                <div class="font-bold text-white text-xs">{{ log.user?.name || log.user?.username || 'Agent' }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ log.user?.role || 'System' }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="actionBadgeClass(log.action)" class="text-xs px-2.5 py-1 rounded-full font-semibold font-mono">
+              <td class="px-5 py-3.5 whitespace-nowrap">
+                <span :class="actionBadgeClass(log.action)" class="text-[10px] px-2 py-0.5 rounded font-bold font-mono uppercase">
                   {{ log.action }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-300">
-                <div class="font-semibold text-gray-200">{{ log.entityType }}</div>
-                <div class="font-mono text-gray-500 text-[11px]">ID: {{ log.entityId }}</div>
+              <td class="px-5 py-3.5 whitespace-nowrap text-slate-300">
+                <div class="font-bold text-slate-200">{{ log.entityType }}</div>
+                <div class="font-mono text-slate-500 text-[10px]">ID: {{ log.entityId?.substring(0, 8) }}...</div>
               </td>
-              <td class="px-6 py-4 text-xs text-gray-300 max-w-md">
-                <div class="bg-gray-900/70 p-2.5 rounded border border-gray-700/60 font-mono text-[11px] overflow-x-auto text-gray-300">
+              <td class="px-5 py-3.5 text-slate-300 max-w-md">
+                <div class="bg-[#0D1322] p-2 rounded-lg border border-slate-800 font-mono text-[10px] overflow-x-auto text-slate-300">
                   <span v-if="log.details?.title" class="text-blue-300 font-semibold block mb-0.5">Title: "{{ log.details.title }}"</span>
                   <span v-if="log.details?.oldState && log.details?.newState" class="text-amber-300 font-semibold block mb-0.5">
                     State: {{ log.details.oldState }} → {{ log.details.newState }}
@@ -142,7 +139,7 @@
                   <span v-if="log.details?.type && log.details?.strength" class="text-emerald-300 font-semibold block mb-0.5">
                     Link: {{ log.details.type }} (Strength: {{ log.details.strength }})
                   </span>
-                  <span class="text-gray-500 block truncate">{{ JSON.stringify(log.details) }}</span>
+                  <span class="text-slate-500 block truncate">{{ JSON.stringify(log.details) }}</span>
                 </div>
               </td>
             </tr>
@@ -151,7 +148,7 @@
       </div>
 
       <!-- Pagination Controls -->
-      <div v-if="pagination.totalPages > 1 || pagination.total > 0" class="bg-gray-900/80 px-6 py-3.5 border-t border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
+      <div v-if="pagination.totalPages > 1 || pagination.total > 0" class="bg-[#0D1322] px-5 py-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-mono">
         <div>
           Showing page <span class="font-bold text-white">{{ pagination.page }}</span> of <span class="font-bold text-white">{{ pagination.totalPages }}</span> (Total {{ pagination.total }} audit entries)
         </div>
@@ -159,14 +156,14 @@
           <button 
             :disabled="pagination.page <= 1" 
             @click="fetchLogs(pagination.page - 1)" 
-            class="px-3.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-white rounded border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             ← Previous
           </button>
           <button 
             :disabled="pagination.page >= pagination.totalPages" 
             @click="fetchLogs(pagination.page + 1)" 
-            class="px-3.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-white rounded border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             Next →
           </button>
@@ -229,12 +226,12 @@ const fetchLogs = async (page = 1) => {
 };
 
 const actionBadgeClass = (action) => {
-  if (action?.includes('VERIFY')) return 'bg-emerald-950 text-emerald-300 border border-emerald-800';
-  if (action?.includes('RELATIONSHIP')) return 'bg-indigo-950 text-indigo-300 border border-indigo-800';
-  if (action?.includes('HYPOTHESIS')) return 'bg-purple-950 text-purple-300 border border-purple-800';
-  if (action?.includes('EVIDENCE')) return 'bg-blue-950 text-blue-300 border border-blue-800';
-  if (action?.includes('STATUS')) return 'bg-amber-950 text-amber-300 border border-amber-800';
-  return 'bg-gray-800 text-gray-300 border border-gray-700';
+  if (action?.includes('VERIFY')) return 'bg-emerald-950/80 text-emerald-300 border border-emerald-800';
+  if (action?.includes('RELATIONSHIP')) return 'bg-indigo-950/80 text-indigo-300 border border-indigo-800';
+  if (action?.includes('HYPOTHESIS')) return 'bg-purple-950/80 text-purple-300 border border-purple-800';
+  if (action?.includes('EVIDENCE')) return 'bg-blue-950/80 text-blue-300 border border-blue-800';
+  if (action?.includes('STATUS')) return 'bg-amber-950/80 text-amber-300 border border-amber-800';
+  return 'bg-slate-800 text-slate-300 border border-slate-700';
 };
 
 const formatDateTime = (isoString) => {
@@ -246,3 +243,4 @@ onMounted(() => {
   fetchLogs(1);
 });
 </script>
+

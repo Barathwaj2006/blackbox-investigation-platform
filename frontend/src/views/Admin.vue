@@ -1,28 +1,28 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
       <div>
         <div class="flex items-center space-x-3">
-          <h1 class="text-2xl font-bold text-white tracking-wide">ADMIN CONSOLE</h1>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-800">
+          <h1 class="text-xl sm:text-2xl font-black text-white tracking-wide uppercase font-mono">ADMIN CONSOLE</h1>
+          <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-950/80 text-blue-400 border border-blue-800/60 text-[11px] font-mono font-bold tracking-wider">
             SYSTEM CONTROL
           </span>
         </div>
-        <p class="text-gray-400 text-sm mt-1">Platform user surveillance, role-based access monitoring, and case operational metrics.</p>
+        <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Platform user surveillance, role-based access monitoring, and case operational metrics.</p>
       </div>
 
       <!-- Admin Tabs -->
-      <div class="flex bg-gray-800 p-1 rounded-lg border border-gray-700">
+      <div class="flex bg-[#0B0F19] p-1 rounded-lg border border-slate-800 self-start md:self-auto shadow-sm">
         <button 
           @click="activeTab = 'users'" 
-          :class="[activeTab === 'users' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200', 'px-4 py-1.5 rounded-md text-sm font-medium transition']"
+          :class="[activeTab === 'users' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200', 'px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition font-mono uppercase']"
         >
           User Monitoring
         </button>
         <button 
           @click="activeTab = 'cases'" 
-          :class="[activeTab === 'cases' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200', 'px-4 py-1.5 rounded-md text-sm font-medium transition']"
+          :class="[activeTab === 'cases' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200', 'px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition font-mono uppercase']"
         >
           Case Oversight
         </button>
@@ -30,38 +30,38 @@
     </div>
 
     <!-- Unauthorized Banner if not admin -->
-    <div v-if="authStore.user?.role !== 'Admin'" class="bg-rose-950/60 border border-rose-800 text-rose-200 p-8 rounded-lg text-center">
-      <h2 class="text-lg font-bold">Access Restricted</h2>
-      <p class="text-sm mt-1 text-rose-300">You must possess the Administrator role to access system user management and case telemetry.</p>
-      <router-link to="/" class="mt-4 inline-block bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded text-sm text-white">Return to Dashboard</router-link>
+    <div v-if="authStore.user?.role !== 'Admin'" class="bg-rose-950/40 border border-rose-800/80 text-rose-200 p-8 rounded-xl text-center shadow-sm">
+      <h2 class="text-base font-bold font-mono uppercase">Access Restricted</h2>
+      <p class="text-xs mt-1 text-rose-300">You must possess the Administrator role to access system user management and case telemetry.</p>
+      <router-link to="/" class="mt-4 inline-block bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition">Return to Dashboard</router-link>
     </div>
 
     <div v-else>
       <!-- TAB 1: USER MONITORING -->
       <div v-if="activeTab === 'users'" class="space-y-4">
         <!-- Filter and Search Bar -->
-        <div class="bg-gray-800/80 p-4 rounded-lg border border-gray-700 flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div class="bg-[#0B0F19] p-3.5 rounded-xl border border-slate-800/90 flex flex-col md:flex-row gap-3 items-center justify-between shadow-sm">
           <div class="w-full md:w-1/2 relative">
             <input 
               v-model="userSearch" 
               @input="onUserSearchInput"
               type="text" 
               placeholder="Search users by name or username..." 
-              class="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              class="w-full bg-[#0D1322] border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             />
-            <svg class="w-4 h-4 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </div>
 
-          <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
-            <label class="text-xs text-gray-400 font-semibold uppercase">Role:</label>
+          <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+            <label class="text-[10px] text-slate-400 font-bold uppercase font-mono">Role:</label>
             <select 
               v-model="userRoleFilter" 
               @change="fetchUsers(1)"
-              class="bg-gray-900 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+              class="bg-[#0D1322] border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             >
-              <option value="">All Roles</option>
+              <option value="">ALL ROLES</option>
               <option value="Admin">Admin</option>
               <option value="Investigator">Investigator</option>
               <option value="Reviewer">Reviewer</option>
@@ -70,45 +70,48 @@
         </div>
 
         <!-- Users Table -->
-        <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-          <div v-if="usersLoading" class="py-12 text-center text-gray-400">Loading user registries...</div>
-          <div v-else-if="users.length === 0" class="py-12 text-center text-gray-400">No users match the specified criteria.</div>
+        <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 overflow-hidden shadow-sm">
+          <div v-if="usersLoading" class="py-16 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
+            <div class="w-7 h-7 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+            <span class="text-xs font-mono text-slate-400">Loading user registries...</span>
+          </div>
+          <div v-else-if="users.length === 0" class="py-12 text-center text-slate-500 text-xs font-mono">No users match the specified criteria.</div>
           <div v-else class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-700">
-              <thead class="bg-gray-900/90 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+            <table class="min-w-full divide-y divide-slate-800">
+              <thead class="bg-[#0D1322] text-slate-400 text-[10px] font-mono font-bold uppercase tracking-wider">
                 <tr>
-                  <th class="px-6 py-3.5 text-left">User Identity</th>
-                  <th class="px-6 py-3.5 text-left">Role</th>
-                  <th class="px-6 py-3.5 text-left">Status</th>
-                  <th class="px-6 py-3.5 text-left">Cases Created</th>
-                  <th class="px-6 py-3.5 text-left">Audit Events</th>
-                  <th class="px-6 py-3.5 text-left">Registered Date</th>
+                  <th class="px-5 py-3 text-left">User Identity</th>
+                  <th class="px-5 py-3 text-left">Role</th>
+                  <th class="px-5 py-3 text-left">Status</th>
+                  <th class="px-5 py-3 text-left">Cases Created</th>
+                  <th class="px-5 py-3 text-left">Audit Events</th>
+                  <th class="px-5 py-3 text-left">Registered Date</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-700/60 text-sm">
-                <tr v-for="u in users" :key="u._id" class="hover:bg-gray-750 transition">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="font-medium text-white">{{ u.name }}</div>
-                    <div class="text-xs text-gray-400 font-mono">@{{ u.username }}</div>
+              <tbody class="divide-y divide-slate-850 text-xs">
+                <tr v-for="u in users" :key="u._id" class="hover:bg-slate-900/60 transition">
+                  <td class="px-5 py-3.5 whitespace-nowrap">
+                    <div class="font-bold text-white">{{ u.name }}</div>
+                    <div class="text-[10px] text-slate-400 font-mono">@{{ u.username }}</div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="roleBadgeClass(u.role)" class="text-xs px-2.5 py-1 rounded-full font-semibold">
+                  <td class="px-5 py-3.5 whitespace-nowrap">
+                    <span :class="roleBadgeClass(u.role)" class="text-[10px] px-2 py-0.5 rounded font-bold font-mono uppercase">
                       {{ u.role }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex items-center text-xs text-emerald-400 font-semibold">
+                  <td class="px-5 py-3.5 whitespace-nowrap">
+                    <span class="inline-flex items-center text-xs text-emerald-400 font-mono font-semibold">
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
-                      Active
+                      ACTIVE
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-200">
+                  <td class="px-5 py-3.5 whitespace-nowrap font-mono text-slate-200 font-bold">
                     {{ u.caseCount || 0 }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-200">
+                  <td class="px-5 py-3.5 whitespace-nowrap font-mono text-slate-200 font-bold">
                     {{ u.activityCount || 0 }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400">
+                  <td class="px-5 py-3.5 whitespace-nowrap text-slate-400 font-mono text-[11px]">
                     {{ formatDate(u.createdAt) }}
                   </td>
                 </tr>
@@ -117,7 +120,7 @@
           </div>
 
           <!-- Pagination Controls -->
-          <div v-if="userPagination.totalPages > 1" class="bg-gray-900/80 px-6 py-3.5 border-t border-gray-700 flex items-center justify-between text-xs text-gray-400">
+          <div v-if="userPagination.totalPages > 1" class="bg-[#0D1322] px-5 py-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
             <div>
               Showing page <span class="font-bold text-white">{{ userPagination.page }}</span> of <span class="font-bold text-white">{{ userPagination.totalPages }}</span> ({{ userPagination.total }} users)
             </div>
@@ -125,14 +128,14 @@
               <button 
                 :disabled="userPagination.page <= 1" 
                 @click="fetchUsers(userPagination.page - 1)" 
-                class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white rounded border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
                 Previous
               </button>
               <button 
                 :disabled="userPagination.page >= userPagination.totalPages" 
                 @click="fetchUsers(userPagination.page + 1)" 
-                class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white rounded border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
                 Next
               </button>
@@ -143,51 +146,54 @@
 
       <!-- TAB 2: CASE OVERSIGHT / MONITORING -->
       <div v-if="activeTab === 'cases'" class="space-y-6">
-        <div v-if="caseOversightLoading" class="py-12 text-center text-gray-400">Aggregating case telemetry...</div>
+        <div v-if="caseOversightLoading" class="py-16 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
+          <div class="w-7 h-7 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+          <span class="text-xs font-mono text-slate-400">Aggregating case telemetry...</span>
+        </div>
         <div v-else-if="caseOversight" class="space-y-6">
           <!-- Overview Cards -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
-              <div class="text-xs text-gray-400 font-semibold uppercase">Total Operations</div>
-              <div class="text-2xl font-bold font-mono text-white mt-1">{{ caseOversight.totalCases }}</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-4 shadow-sm">
+              <div class="text-[11px] text-slate-400 font-bold uppercase font-mono">Total Operations</div>
+              <div class="text-2xl font-black font-mono text-white mt-1">{{ caseOversight.totalCases }}</div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
-              <div class="text-xs text-amber-400 font-semibold uppercase">Active Cases</div>
-              <div class="text-2xl font-bold font-mono text-amber-400 mt-1">{{ caseOversight.activeCases }}</div>
+            <div class="bg-[#0B0F19] border border-amber-900/30 rounded-xl p-4 shadow-sm">
+              <div class="text-[11px] text-amber-400 font-bold uppercase font-mono">Active Cases</div>
+              <div class="text-2xl font-black font-mono text-amber-400 mt-1">{{ caseOversight.activeCases }}</div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
-              <div class="text-xs text-purple-400 font-semibold uppercase">In Review</div>
-              <div class="text-2xl font-bold font-mono text-purple-400 mt-1">{{ caseOversight.statusCounts?.REVIEW || 0 }}</div>
+            <div class="bg-[#0B0F19] border border-purple-900/30 rounded-xl p-4 shadow-sm">
+              <div class="text-[11px] text-purple-400 font-bold uppercase font-mono">In Review</div>
+              <div class="text-2xl font-black font-mono text-purple-400 mt-1">{{ caseOversight.statusCounts?.REVIEW || 0 }}</div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4">
-              <div class="text-xs text-emerald-400 font-semibold uppercase">Resolved</div>
-              <div class="text-2xl font-bold font-mono text-emerald-400 mt-1">{{ caseOversight.statusCounts?.RESOLVED || 0 }}</div>
+            <div class="bg-[#0B0F19] border border-emerald-900/30 rounded-xl p-4 shadow-sm">
+              <div class="text-[11px] text-emerald-400 font-bold uppercase font-mono">Resolved</div>
+              <div class="text-2xl font-black font-mono text-emerald-400 mt-1">{{ caseOversight.statusCounts?.RESOLVED || 0 }}</div>
             </div>
           </div>
 
           <!-- High-Priority Cases & Activity Feed -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- High Priority Cases -->
-            <div class="bg-gray-800 rounded-lg border border-gray-700 p-5">
-              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4 flex items-center justify-between">
+            <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 p-5 shadow-sm">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono mb-4 flex items-center justify-between border-b border-slate-800 pb-2.5">
                 <span>Critical / High Priority Investigations</span>
-                <span class="text-xs bg-rose-950 text-rose-300 px-2 py-0.5 rounded border border-rose-800 font-mono">
+                <span class="text-[10px] bg-rose-950/80 text-rose-300 px-2 py-0.5 rounded border border-rose-800 font-mono font-bold">
                   {{ caseOversight.highPriorityCases?.length || 0 }} Escalated
                 </span>
               </h2>
 
-              <div v-if="!caseOversight.highPriorityCases || caseOversight.highPriorityCases.length === 0" class="py-8 text-center text-gray-400 text-sm">
+              <div v-if="!caseOversight.highPriorityCases || caseOversight.highPriorityCases.length === 0" class="py-8 text-center text-slate-500 text-xs font-mono">
                 No critical cases pending at this time.
               </div>
-              <div v-else class="space-y-3">
-                <div v-for="c in caseOversight.highPriorityCases" :key="c._id" class="bg-gray-900/80 border border-gray-700 p-3.5 rounded-lg flex items-center justify-between">
+              <div v-else class="space-y-2.5">
+                <div v-for="c in caseOversight.highPriorityCases" :key="c._id" class="bg-[#0D1322] border border-slate-800/80 p-3 rounded-lg flex items-center justify-between hover:border-slate-700 transition">
                   <div>
-                    <router-link :to="{ name: 'CaseDetail', params: { id: c._id } }" class="text-sm font-semibold text-white hover:text-blue-400 transition">
+                    <router-link :to="{ name: 'CaseDetail', params: { id: c._id } }" class="text-xs font-bold text-white hover:text-blue-400 transition line-clamp-1">
                       {{ c.title }}
                     </router-link>
-                    <div class="text-xs text-gray-400 mt-0.5">Author: {{ c.createdBy }} • Updated: {{ formatDate(c.updatedAt || c.createdAt) }}</div>
+                    <div class="text-[10px] text-slate-400 mt-0.5 font-mono">Lead: {{ c.createdBy }} • Updated: {{ formatDate(c.updatedAt || c.createdAt) }}</div>
                   </div>
-                  <span :class="c.priority === 'CRITICAL' ? 'bg-rose-950 text-rose-300 border-rose-800' : 'bg-amber-950 text-amber-300 border-amber-800'" class="text-xs px-2.5 py-1 rounded-full font-semibold border">
+                  <span :class="c.priority === 'CRITICAL' ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-amber-950/80 text-amber-300 border-amber-800'" class="text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase border whitespace-nowrap ml-2">
                     {{ c.priority }}
                   </span>
                 </div>
@@ -195,26 +201,26 @@
             </div>
 
             <!-- Recent Case Activity -->
-            <div class="bg-gray-800 rounded-lg border border-gray-700 p-5">
-              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">
+            <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 p-5 shadow-sm">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono mb-4 border-b border-slate-800 pb-2.5">
                 Recent Case Mutation Activity
               </h2>
 
-              <div v-if="!caseOversight.recentActivity || caseOversight.recentActivity.length === 0" class="py-8 text-center text-gray-400 text-sm">
+              <div v-if="!caseOversight.recentActivity || caseOversight.recentActivity.length === 0" class="py-8 text-center text-slate-500 text-xs font-mono">
                 No recorded activity logs.
               </div>
-              <div v-else class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
-                <div v-for="log in caseOversight.recentActivity" :key="log._id" class="bg-gray-900/60 border border-gray-800 p-3 rounded-lg text-xs flex justify-between items-start gap-2">
+              <div v-else class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                <div v-for="log in caseOversight.recentActivity" :key="log._id" class="bg-[#0D1322] border border-slate-800/60 p-2.5 rounded-lg text-xs flex justify-between items-start gap-2">
                   <div>
-                    <span class="font-semibold text-blue-300">{{ log.user?.name || log.user?.username || 'Agent' }}</span>
-                    <span class="text-gray-400"> executed </span>
-                    <span class="font-mono text-amber-300">{{ log.action }}</span>
-                    <div v-if="log.details" class="text-gray-400 text-[11px] mt-0.5 line-clamp-1">
+                    <span class="font-bold text-blue-400">{{ log.user?.name || log.user?.username || 'Agent' }}</span>
+                    <span class="text-slate-400 text-xs"> executed </span>
+                    <span class="font-mono text-amber-400 font-semibold">{{ log.action }}</span>
+                    <div v-if="log.details" class="text-slate-400 text-[10px] font-mono mt-0.5 line-clamp-1">
                       <span v-if="log.details.title">"{{ log.details.title }}"</span>
                       <span v-else>{{ JSON.stringify(log.details) }}</span>
                     </div>
                   </div>
-                  <span class="text-gray-500 font-mono text-[11px] flex-shrink-0">{{ formatDate(log.createdAt) }}</span>
+                  <span class="text-slate-500 font-mono text-[10px] flex-shrink-0">{{ formatDate(log.createdAt) }}</span>
                 </div>
               </div>
             </div>
@@ -292,10 +298,10 @@ const fetchCaseOversight = async () => {
 
 const roleBadgeClass = (role) => {
   switch (role) {
-    case 'Admin': return 'bg-purple-950 text-purple-300 border border-purple-800';
-    case 'Investigator': return 'bg-blue-950 text-blue-300 border border-blue-800';
-    case 'Reviewer': return 'bg-amber-950 text-amber-300 border border-amber-800';
-    default: return 'bg-gray-800 text-gray-300 border border-gray-700';
+    case 'Admin': return 'bg-purple-950/80 text-purple-300 border border-purple-800';
+    case 'Investigator': return 'bg-blue-950/80 text-blue-300 border border-blue-800';
+    case 'Reviewer': return 'bg-amber-950/80 text-amber-300 border border-amber-800';
+    default: return 'bg-slate-800 text-slate-300 border border-slate-700';
   }
 };
 
@@ -311,3 +317,4 @@ onMounted(() => {
   }
 });
 </script>
+
