@@ -13,7 +13,7 @@
             Every claim needs a source. Every source needs a chain.
           </h1>
           <p class="text-sm text-[#9aa0a6] leading-relaxed">
-            Sign in to collect evidence, verify its integrity, and analyze how forensic telemetry shifts competing analytical hypotheses in real time.
+            Sign in to collect evidence, verify its integrity, and analyze how forensic artifacts shift competing analytical hypotheses in real time.
           </p>
         </div>
       </div>
@@ -102,7 +102,7 @@
             Standard Authentication
           </span>
           <span class="text-[11px] font-mono text-[#666c73]">
-            Default PW: demo
+            Operator Sign In
           </span>
         </div>
 

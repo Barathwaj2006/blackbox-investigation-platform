@@ -6,7 +6,7 @@
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-200">Investigation Intelligence Signals</h3>
       </div>
       <div class="flex items-center space-x-3">
-        <span class="text-[10px] font-mono text-gray-400">Live Telemetry</span>
+        <span class="text-[10px] font-mono text-gray-400">Signals Engine</span>
         <button
           v-if="scoreHistory.length > 0"
           @click="$emit('open-history')"

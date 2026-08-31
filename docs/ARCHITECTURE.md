@@ -2,7 +2,7 @@
 
 ## System Overview
 
-BlackBox is a consolidated, single-service digital evidence investigation platform. It provides forensic investigators, intelligence analysts, and reviewers with a structured console to track cases, log digital evidence, link evidence to competing hypotheses with dynamic mathematical scoring, and record every mutation in a tamper-evident audit trail.
+BlackBox is a consolidated, single-service digital evidence investigation platform. It provides forensic investigators, intelligence analysts, and reviewers with a structured console to track cases, log digital evidence, link evidence to competing hypotheses with dynamic mathematical scoring, and record every mutation in an immutable audit trail.
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -55,7 +55,7 @@ BlackBox is a consolidated, single-service digital evidence investigation platfo
    - **Investigator**: Case authoring, evidence logging, hypothesis formulation, evidence-hypothesis linking, and verification proposals.
    - **Reviewer**: Read-only oversight across all cases, evidence review, and audit trail inspection.
 
-3. **Tamper-Evident Audit Logging**:
+3. **Immutable Centralized Audit Logging**:
    Every case creation, status transition, evidence verification update, and hypothesis relationship mutation is logged synchronously with actor identity, timestamp, action type, and before-and-after state changes.
 
 4. **Dual Persistence Strategy**:

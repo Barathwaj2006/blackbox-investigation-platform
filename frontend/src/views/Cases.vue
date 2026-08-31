@@ -13,14 +13,6 @@
       </div>
       <div class="flex flex-wrap items-center gap-2 self-start md:self-auto">
         <button 
-          @click="loadDemoCase"
-          :disabled="loadingDemo"
-          class="bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/40 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 font-mono shadow-sm disabled:opacity-50"
-        >
-          <span>⚡</span>
-          <span>{{ loadingDemo ? 'Seeding...' : 'Load Demo Case (BK-2041)' }}</span>
-        </button>
-        <button 
           v-if="['Admin', 'Investigator'].includes(authStore.user?.role)" 
           @click="showCreateModal = true" 
           class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 shadow-md shadow-blue-900/30 active:scale-95"
@@ -217,7 +209,6 @@ const authStore = useAuthStore();
 const cases = ref([]);
 const loading = ref(true);
 const creating = ref(false);
-const loadingDemo = ref(false);
 const showCreateModal = ref(false);
 const newCase = ref({ title: '', description: '' });
 
@@ -284,20 +275,6 @@ const createCase = async () => {
     console.error('Error creating case:', err);
   } finally {
     creating.value = false;
-  }
-};
-
-const loadDemoCase = async () => {
-  loadingDemo.value = true;
-  try {
-    const res = await apiFetch('/api/demo/seed', { method: 'POST' });
-    if (res.success && res.data) {
-      router.push({ name: 'CaseDetail', params: { id: res.data.caseId || 'case_bk2041' } });
-    }
-  } catch (err) {
-    console.error('Error loading demo case:', err);
-  } finally {
-    loadingDemo.value = false;
   }
 };
 

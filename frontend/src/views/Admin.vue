@@ -32,7 +32,7 @@
     <!-- Unauthorized Banner if not admin -->
     <div v-if="authStore.user?.role !== 'Admin'" class="bg-rose-950/40 border border-rose-800/80 text-rose-200 p-8 rounded-xl text-center shadow-sm">
       <h2 class="text-base font-bold font-mono uppercase">Access Restricted</h2>
-      <p class="text-xs mt-1 text-rose-300">You must possess the Administrator role to access system user management and case telemetry.</p>
+      <p class="text-xs mt-1 text-rose-300">You must possess the Administrator role to access system user management and case oversight.</p>
       <router-link to="/" class="mt-4 inline-block bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition">Return to Dashboard</router-link>
     </div>
 
@@ -148,7 +148,7 @@
       <div v-if="activeTab === 'cases'" class="space-y-6">
         <div v-if="caseOversightLoading" class="py-16 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
           <div class="w-7 h-7 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
-          <span class="text-xs font-mono text-slate-400">Aggregating case telemetry...</span>
+          <span class="text-xs font-mono text-slate-400">Aggregating case oversight metrics...</span>
         </div>
         <div v-else-if="caseOversight" class="space-y-6">
           <!-- Overview Cards -->

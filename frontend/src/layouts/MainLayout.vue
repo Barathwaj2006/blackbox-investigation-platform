@@ -302,21 +302,38 @@
           </button>
 
           <!-- Breadcrumb / Section Label -->
-          <div class="flex items-center space-x-2 text-xs font-mono truncate">
-            <span class="text-slate-500 font-bold uppercase tracking-wider">BLACKBOX</span>
-            <span class="text-slate-600">/</span>
-            <span class="text-slate-200 font-semibold tracking-wide uppercase">{{ currentSectionName }}</span>
-          </div>
+          <nav class="flex items-center space-x-1.5 text-xs font-mono truncate" aria-label="Breadcrumb">
+            <router-link to="/" class="text-slate-500 hover:text-slate-300 font-bold uppercase tracking-wider transition">
+              BLACKBOX
+            </router-link>
+            
+            <template v-if="breadcrumbItems.length > 0">
+              <template v-for="(item, idx) in breadcrumbItems" :key="idx">
+                <span class="text-slate-600">/</span>
+                <router-link 
+                  v-if="item.to && idx < breadcrumbItems.length - 1" 
+                  :to="item.to" 
+                  class="text-slate-400 hover:text-blue-400 font-semibold tracking-wide uppercase transition truncate max-w-[140px]"
+                >
+                  {{ item.label }}
+                </router-link>
+                <span 
+                  v-else 
+                  class="text-slate-200 font-bold tracking-wide uppercase truncate max-w-[180px]"
+                >
+                  {{ item.label }}
+                </span>
+              </template>
+            </template>
+            <template v-else>
+              <span class="text-slate-600">/</span>
+              <span class="text-slate-200 font-semibold tracking-wide uppercase">{{ currentSectionName }}</span>
+            </template>
+          </nav>
         </div>
 
         <!-- Right: Status Indicators & Quick Actions -->
         <div class="flex items-center space-x-3">
-          <!-- Live System Telemetry Badge -->
-          <div class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 text-[11px] font-mono font-semibold">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>SYSTEM ONLINE</span>
-          </div>
-
           <!-- Quick Case Action Shortcut -->
           <router-link 
             to="/cases" 
@@ -395,6 +412,46 @@ const roleBadgeClass = computed(() => {
   if (role === 'Admin') return 'bg-purple-950 text-purple-400 border border-purple-800';
   if (role === 'Investigator') return 'bg-blue-950 text-blue-400 border border-blue-800';
   return 'bg-emerald-950 text-emerald-400 border border-emerald-800';
+});
+
+const breadcrumbItems = computed(() => {
+  const path = route.path;
+  const items = [];
+
+  if (path === '/') {
+    items.push({ label: 'COMMAND CENTER', to: '/' });
+  } else if (path === '/cases') {
+    items.push({ label: 'INVESTIGATIONS', to: '/cases' });
+  } else if (path.startsWith('/cases/') && path !== '/cases') {
+    items.push({ label: 'INVESTIGATIONS', to: '/cases' });
+    const rawCaseId = route.params.id ? String(route.params.id) : '';
+    const caseLabel = rawCaseId.toUpperCase().replace('CASE_', '');
+    const tabName = route.query.tab;
+
+    if (tabName && tabName !== 'overview') {
+      items.push({ label: caseLabel || 'DOSSIER', to: `/cases/${route.params.id}?tab=overview` });
+      const tabLabels = {
+        evidence: 'EVIDENCE',
+        hypotheses: 'HYPOTHESES',
+        map: 'EVIDENCE MAP',
+        timeline: 'TIMELINE',
+        audit: 'AUDIT TRAIL'
+      };
+      items.push({ label: tabLabels[tabName] || String(tabName).toUpperCase(), to: null });
+    } else {
+      items.push({ label: caseLabel || 'DOSSIER', to: `/cases/${route.params.id}` });
+    }
+  } else if (path.startsWith('/audit')) {
+    items.push({ label: 'ACTIVITY', to: '/audit' });
+    items.push({ label: 'AUDIT TRAIL', to: '/audit' });
+  } else if (path.startsWith('/admin')) {
+    items.push({ label: 'ADMINISTRATION', to: '/admin' });
+    items.push({ label: 'ADMIN CONSOLE', to: '/admin' });
+  } else {
+    items.push({ label: currentSectionName.value.toUpperCase(), to: path });
+  }
+
+  return items;
 });
 
 const currentSectionName = computed(() => {

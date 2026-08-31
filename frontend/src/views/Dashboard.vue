@@ -5,24 +5,12 @@
       <div>
         <div class="flex items-center space-x-3">
           <h1 class="text-xl sm:text-2xl font-black text-white tracking-wide uppercase font-mono">INVESTIGATION COMMAND CENTER</h1>
-          <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 text-[11px] font-mono font-bold tracking-wider">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-            LIVE TELEMETRY
-          </span>
         </div>
-        <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Real-time intelligence aggregation, evidence verification pipelines, and hypothesis tracking.</p>
+        <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Intelligence aggregation, evidence verification pipelines, and hypothesis tracking.</p>
       </div>
 
       <!-- Quick Actions -->
       <div class="flex flex-wrap items-center gap-2">
-        <button 
-          @click="loadDemoCase"
-          :disabled="loadingDemo"
-          class="bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/40 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 font-mono shadow-sm disabled:opacity-50"
-        >
-          <span>⚡</span>
-          <span>{{ loadingDemo ? 'Seeding...' : 'Load Demo (BK-2041)' }}</span>
-        </button>
         <button 
           v-if="['Admin', 'Investigator'].includes(authStore.user?.role)"
           @click="showCreateModal = true" 
@@ -69,7 +57,7 @@
     <!-- Loading State -->
     <div v-if="loading && !stats" class="py-20 text-center text-slate-400 flex flex-col items-center justify-center space-y-3">
       <div class="w-8 h-8 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
-      <span class="text-xs font-mono text-slate-400">Aggregating telemetry & case intelligence...</span>
+      <span class="text-xs font-mono text-slate-400">Loading case intelligence...</span>
     </div>
 
     <!-- Dashboard Content -->
@@ -425,7 +413,6 @@ const error = ref(null);
 
 const showCreateModal = ref(false);
 const creatingCase = ref(false);
-const loadingDemo = ref(false);
 const newCase = ref({ title: '', description: '' });
 
 const fetchDashboardData = async () => {
@@ -467,20 +454,6 @@ const createCase = async () => {
     alert('Error creating case');
   } finally {
     creatingCase.value = false;
-  }
-};
-
-const loadDemoCase = async () => {
-  loadingDemo.value = true;
-  try {
-    const res = await apiFetch('/api/demo/seed', { method: 'POST' });
-    if (res.success && res.data) {
-      router.push({ name: 'CaseDetail', params: { id: res.data.caseId || 'case_bk2041' } });
-    }
-  } catch (err) {
-    console.error('Error seeding demo investigation:', err);
-  } finally {
-    loadingDemo.value = false;
   }
 };
 
