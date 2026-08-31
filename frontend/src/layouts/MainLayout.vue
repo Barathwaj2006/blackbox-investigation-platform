@@ -18,18 +18,9 @@
       ]"
     >
       <!-- Sidebar Header / Brand -->
-      <div class="flex items-center justify-between px-4 h-14 border-b border-slate-800/80 bg-[#0D1322]">
-        <router-link to="/" class="flex items-center space-x-2.5 overflow-hidden group">
-          <div class="w-8 h-8 rounded-md bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-mono font-bold text-sm shadow-md shadow-blue-500/20 flex-shrink-0 group-hover:scale-105 transition-transform">
-            <span>BB</span>
-          </div>
-          <div v-show="!isCollapsed || mobileMenuOpen" class="flex flex-col overflow-hidden transition-opacity duration-150">
-            <div class="flex items-center space-x-1.5">
-              <span class="text-sm font-extrabold tracking-widest text-white uppercase font-mono">BLACKBOX</span>
-              <span class="text-[9px] font-mono px-1 py-0.2 bg-blue-950/80 text-blue-400 rounded border border-blue-800/50">v1.2</span>
-            </div>
-            <span class="text-[10px] text-slate-400 font-medium tracking-tight truncate">Intelligence Console</span>
-          </div>
+      <div class="flex items-center justify-between px-3.5 h-14 border-b border-[#33393f] bg-[#1b1f23]">
+        <router-link to="/" class="flex items-center overflow-hidden group">
+          <BlackboxLogo :mode="isCollapsed && !mobileMenuOpen ? 'icon-only' : 'sub'" size="sm" />
         </router-link>
 
         <!-- Mobile Close Button -->
@@ -47,7 +38,7 @@
         <button 
           v-show="!isCollapsed" 
           @click="toggleSidebar"
-          class="hidden md:flex items-center justify-center w-6 h-6 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition"
+          class="hidden md:flex items-center justify-center w-6 h-6 rounded text-slate-400 hover:text-white hover:bg-[#2c333a] transition"
           title="Collapse sidebar"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,11 +49,6 @@
 
       <!-- Navigation Links -->
       <div class="flex-1 py-3 px-2 overflow-y-auto space-y-1">
-        <!-- Section: OPERATIONS -->
-        <div v-show="!isCollapsed || mobileMenuOpen" class="px-2.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-          Investigation
-        </div>
-
         <!-- 1. Command Center -->
         <router-link 
           to="/" 
@@ -73,39 +59,128 @@
           <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
           </svg>
-          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Command Center</span>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate font-mono">COMMAND CENTER</span>
           
-          <!-- Collapsed Tooltip -->
           <div 
             v-if="isCollapsed && !mobileMenuOpen"
-            class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
+            class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none font-mono"
           >
             Command Center
           </div>
         </router-link>
 
-        <!-- 2. Cases & Operations -->
+        <!-- Section: INVESTIGATIONS -->
+        <div v-show="!isCollapsed || mobileMenuOpen" class="px-2.5 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+          Investigations
+        </div>
+
+        <!-- 2. Cases -->
         <router-link 
           to="/cases" 
           @click="mobileMenuOpen = false"
           class="group relative flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition"
-          exact-active-class="bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500"
+          :class="isCasesRouteActive ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500' : ''"
         >
           <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
           </svg>
-          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Cases & Operations</span>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Cases</span>
 
-          <!-- Collapsed Tooltip -->
           <div 
             v-if="isCollapsed && !mobileMenuOpen"
             class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
           >
-            Cases & Operations
+            Cases
           </div>
         </router-link>
 
-        <!-- 3. Audit Trail -->
+        <!-- Section: INTELLIGENCE -->
+        <div v-show="!isCollapsed || mobileMenuOpen" class="px-2.5 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+          Intelligence
+        </div>
+
+        <!-- 3. Evidence -->
+        <button 
+          @click="navigateToWorkspaceTab('evidence')"
+          class="w-full text-left group relative flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition"
+          :class="isCurrentTab('evidence') ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500' : ''"
+        >
+          <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Evidence</span>
+
+          <div 
+            v-if="isCollapsed && !mobileMenuOpen"
+            class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
+          >
+            Evidence
+          </div>
+        </button>
+
+        <!-- 4. Hypotheses -->
+        <button 
+          @click="navigateToWorkspaceTab('hypotheses')"
+          class="w-full text-left group relative flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition"
+          :class="isCurrentTab('hypotheses') ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500' : ''"
+        >
+          <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Hypotheses</span>
+
+          <div 
+            v-if="isCollapsed && !mobileMenuOpen"
+            class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
+          >
+            Hypotheses
+          </div>
+        </button>
+
+        <!-- 5. Evidence Map -->
+        <button 
+          @click="navigateToWorkspaceTab('map')"
+          class="w-full text-left group relative flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition"
+          :class="isCurrentTab('map') ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500' : ''"
+        >
+          <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+          </svg>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Evidence Map</span>
+
+          <div 
+            v-if="isCollapsed && !mobileMenuOpen"
+            class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
+          >
+            Evidence Map
+          </div>
+        </button>
+
+        <!-- Section: ACTIVITY -->
+        <div v-show="!isCollapsed || mobileMenuOpen" class="px-2.5 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+          Activity
+        </div>
+
+        <!-- 6. Timeline -->
+        <button 
+          @click="navigateToWorkspaceTab('timeline')"
+          class="w-full text-left group relative flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition"
+          :class="isCurrentTab('timeline') ? 'bg-blue-600/15 text-blue-400 font-semibold border-l-2 border-blue-500' : ''"
+        >
+          <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Timeline</span>
+
+          <div 
+            v-if="isCollapsed && !mobileMenuOpen"
+            class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
+          >
+            Timeline
+          </div>
+        </button>
+
+        <!-- 7. Audit -->
         <router-link 
           to="/audit" 
           @click="mobileMenuOpen = false"
@@ -115,23 +190,22 @@
           <svg class="w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
           </svg>
-          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Audit Trail</span>
+          <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Audit</span>
 
-          <!-- Collapsed Tooltip -->
           <div 
             v-if="isCollapsed && !mobileMenuOpen"
             class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
           >
-            Audit Trail
+            Audit
           </div>
         </router-link>
 
-        <!-- Section: OVERSIGHT -->
-        <div v-if="authStore.user?.role === 'Admin'" v-show="!isCollapsed || mobileMenuOpen" class="px-2.5 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-          Security & Admin
+        <!-- Section: ADMIN -->
+        <div v-if="authStore.user?.role === 'Admin'" v-show="!isCollapsed || mobileMenuOpen" class="px-2.5 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+          Admin
         </div>
 
-        <!-- 4. Admin Console (Admin Only) -->
+        <!-- 8. Admin Console (Admin Only) -->
         <router-link 
           v-if="authStore.user?.role === 'Admin'"
           to="/admin" 
@@ -145,7 +219,6 @@
           </svg>
           <span v-show="!isCollapsed || mobileMenuOpen" class="ml-3 truncate">Admin Console</span>
 
-          <!-- Collapsed Tooltip -->
           <div 
             v-if="isCollapsed && !mobileMenuOpen"
             class="hidden md:group-hover:flex absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded shadow-xl border border-slate-700 whitespace-nowrap z-50 pointer-events-none"
@@ -278,6 +351,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../store/auth';
+import BlackboxLogo from '../components/BlackboxLogo.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -328,9 +402,28 @@ const currentSectionName = computed(() => {
   if (path === '/') return 'Command Center';
   if (path.startsWith('/cases/') && path !== '/cases') return 'Case Dossier';
   if (path.startsWith('/cases')) return 'Case Operations';
-  if (path.startsWith('/audit')) return 'Audit Trail';
+  if (path.startsWith('/audit')) return 'Audit';
   if (path.startsWith('/admin')) return 'Admin Console';
   return 'Operations';
 });
+
+const isCasesRouteActive = computed(() => {
+  return route.name === 'Cases';
+});
+
+const isCurrentTab = (tabName) => {
+  return route.name === 'CaseDetail' && route.query.tab === tabName;
+};
+
+const navigateToWorkspaceTab = (tabName) => {
+  mobileMenuOpen.value = false;
+  const lastCaseId = localStorage.getItem('blackbox_last_case_id') || (route.params.id ? route.params.id : 'case_bk2041');
+  
+  if (route.name === 'CaseDetail' && route.params.id) {
+    router.push({ name: 'CaseDetail', params: { id: route.params.id }, query: { tab: tabName } });
+  } else {
+    router.push({ name: 'CaseDetail', params: { id: lastCaseId }, query: { tab: tabName } });
+  }
+};
 </script>
 

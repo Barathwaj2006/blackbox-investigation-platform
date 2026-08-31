@@ -1,43 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../store/auth';
 
+import Login from '../views/Login.vue';
+import MainLayout from '../layouts/MainLayout.vue';
+import Dashboard from '../views/Dashboard.vue';
+import Cases from '../views/Cases.vue';
+import CaseDetail from '../views/CaseDetail.vue';
+import Audit from '../views/Audit.vue';
+import Admin from '../views/Admin.vue';
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/login',
       name: 'Login',
-      component: () => import('../views/Login.vue')
+      component: Login
     },
     {
       path: '/',
-      component: () => import('../layouts/MainLayout.vue'),
+      component: MainLayout,
       meta: { requiresAuth: true },
       children: [
         {
           path: '',
           name: 'Dashboard',
-          component: () => import('../views/Dashboard.vue')
+          component: Dashboard
         },
         {
           path: 'cases',
           name: 'Cases',
-          component: () => import('../views/Cases.vue')
+          component: Cases
         },
         {
           path: 'cases/:id',
           name: 'CaseDetail',
-          component: () => import('../views/CaseDetail.vue')
+          component: CaseDetail
         },
         {
           path: 'audit',
           name: 'Audit',
-          component: () => import('../views/Audit.vue')
+          component: Audit
         },
         {
           path: 'admin',
           name: 'Admin',
-          component: () => import('../views/Admin.vue')
+          component: Admin
         }
       ]
     }
@@ -52,6 +60,16 @@ router.beforeEach((to, from, next) => {
     next({ name: 'Dashboard' });
   } else {
     next();
+  }
+});
+
+router.onError((error, to) => {
+  if (
+    error?.message?.includes('Failed to fetch dynamically imported module') ||
+    error?.message?.includes('Importing a module script failed') ||
+    error?.name === 'ChunkLoadError'
+  ) {
+    window.location.reload();
   }
 });
 

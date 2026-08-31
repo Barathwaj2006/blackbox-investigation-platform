@@ -201,8 +201,14 @@
         </div>
       </div>
 
-      <!-- Close Action -->
-      <div class="pt-2 border-t border-gray-700 flex justify-end">
+      <!-- Close Action & Map Navigation -->
+      <div class="pt-2 border-t border-gray-700 flex items-center justify-between">
+        <button 
+          @click="$emit('open-in-map', evidence._id)"
+          class="px-4 py-2 bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700 text-xs font-semibold rounded-lg transition flex items-center space-x-1.5 font-mono"
+        >
+          <span>🗺️ Open in Evidence Map</span>
+        </button>
         <button 
           @click="$emit('close')" 
           class="px-5 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg transition"
@@ -224,7 +230,7 @@ const props = defineProps({
   auditLogs: { type: Array, default: () => [] }
 });
 
-defineEmits(['close', 'verify']);
+defineEmits(['close', 'verify', 'open-in-map', 'select-hypothesis']);
 
 const verificationBadgeClass = (state) => {
   switch (state) {

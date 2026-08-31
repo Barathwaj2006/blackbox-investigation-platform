@@ -11,6 +11,7 @@ const hypothesisRoutes = require('./routes/hypothesis.routes');
 const auditRoutes = require('./routes/audit.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const adminRoutes = require('./routes/admin.routes');
+const demoRoutes = require('./routes/demo.routes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/hypotheses', hypothesisRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/demo', demoRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -45,6 +47,11 @@ app.all('/api/*', (req, res) => {
 // Serve frontend static files
 const frontendDist = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendDist));
+
+// Return 404 for missing static assets to prevent returning index.html for .js/.css/.svg/.png/etc
+app.get(['/assets/*', '/*.js', '/*.css', '/*.svg', '/*.png', '/*.ico'], (req, res) => {
+  res.status(404).type('text/plain').send('Asset not found');
+});
 
 // SPA fallback for all remaining non-API routes
 app.get('*', (req, res) => {

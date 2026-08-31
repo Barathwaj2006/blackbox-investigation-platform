@@ -28,7 +28,28 @@
     </div>
 
     <!-- ==================== 1. CASE HEADER ==================== -->
-    <div class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
+    <div class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-5 sm:p-6 shadow-sm relative overflow-hidden space-y-4">
+      <!-- Breadcrumbs & Quick Back Navigation -->
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 text-xs font-mono">
+        <div class="flex items-center space-x-2 text-slate-400">
+          <router-link to="/cases" class="text-blue-400 hover:text-blue-300 flex items-center space-x-1 transition font-bold">
+            <span>←</span>
+            <span>Case Registry</span>
+          </router-link>
+          <span class="text-slate-600">/</span>
+          <span class="text-slate-300 font-bold truncate max-w-[200px] sm:max-w-xs">{{ caseItem.title }}</span>
+        </div>
+        
+        <button 
+          @click="copyCaseId"
+          class="flex items-center space-x-1.5 bg-[#0D1322] hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded text-[11px] transition font-mono"
+          title="Copy Case UUID to Clipboard"
+        >
+          <span>📋</span>
+          <span>Copy ID</span>
+        </button>
+      </div>
+
       <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
         <div class="space-y-2 flex-1">
           <!-- Top metadata row -->
@@ -96,6 +117,46 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ==================== REVIEW MODE BANNER ==================== -->
+    <ReviewModeBanner
+      v-if="caseItem.status === 'REVIEW'"
+      :case-item="caseItem"
+      :evidence="evidence"
+      :hypotheses="hypotheses"
+      :relationships="caseRelationships"
+      @resume-investigation="handleResumeInvestigation"
+      @open-resolve-modal="showResolveModal = true"
+    />
+
+    <!-- ==================== RESOLVED DOSSIER SIGN-OFF BANNER ==================== -->
+    <div 
+      v-else-if="caseItem.status === 'RESOLVED'" 
+      class="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border-2 border-emerald-600/70 rounded-xl p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono"
+    >
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-950 border border-emerald-500/60 flex items-center justify-center text-emerald-400 text-xl font-bold">
+          🛡️
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
+              CASE RESOLVED & SIGNED OFF
+            </span>
+            <span class="text-xs text-emerald-400/80">Forensic Integrity Verified</span>
+          </div>
+          <p class="text-xs text-slate-300 mt-0.5">
+            Primary investigative theory accepted. Score mutations and relational links archived.
+          </p>
+        </div>
+      </div>
+      <button 
+        @click="handleResumeInvestigation"
+        class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition"
+      >
+        Reopen Investigation
+      </button>
     </div>
 
     <!-- ==================== 6. QUICK ACTIONS TOOLBAR ==================== -->
@@ -188,299 +249,267 @@
 
     <!-- ==================== TAB 0: INVESTIGATION OVERVIEW ==================== -->
     <div v-if="tab === 'overview'" class="space-y-6">
-      <!-- 2. INVESTIGATION METRICS CARDS -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <!-- Total Evidence -->
-        <div class="bg-gray-800/90 border border-gray-700 p-4 rounded-xl shadow flex flex-col justify-between">
-          <span class="text-xs uppercase font-semibold text-gray-400">Total Evidence</span>
-          <div class="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-2">{{ evidence.length }}</div>
-          <span class="text-[11px] text-gray-400 mt-1">Cataloged items</span>
-        </div>
-
-        <!-- Verified Evidence -->
-        <div class="bg-gray-800/90 border border-emerald-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
-          <span class="text-xs uppercase font-semibold text-emerald-400">Verified Evidence</span>
-          <div class="text-2xl sm:text-3xl font-extrabold text-emerald-300 font-mono mt-2">{{ verifiedEvidenceCount }}</div>
-          <span class="text-[11px] text-emerald-400/80 mt-1">1.0 weight multiplier</span>
-        </div>
-
-        <!-- Pending Verification -->
-        <div class="bg-gray-800/90 border border-amber-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
-          <span class="text-xs uppercase font-semibold text-amber-400">Pending Review</span>
-          <div class="text-2xl sm:text-3xl font-extrabold text-amber-300 font-mono mt-2">{{ unverifiedEvidenceCount }}</div>
-          <span class="text-[11px] text-amber-400/80 mt-1">0.5 weight multiplier</span>
-        </div>
-
-        <!-- Disputed / Rejected -->
-        <div class="bg-gray-800/90 border border-rose-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
-          <span class="text-xs uppercase font-semibold text-rose-400">Disputed / Rejected</span>
-          <div class="text-2xl sm:text-3xl font-extrabold text-rose-300 font-mono mt-2">{{ disputedOrRejectedCount }}</div>
-          <span class="text-[11px] text-rose-400/80 mt-1">0.0 - 0.2 multiplier</span>
-        </div>
-
-        <!-- Hypotheses Count -->
-        <div class="bg-gray-800/90 border border-purple-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
-          <span class="text-xs uppercase font-semibold text-purple-400">Hypotheses</span>
-          <div class="text-2xl sm:text-3xl font-extrabold text-purple-300 font-mono mt-2">{{ hypotheses.length }}</div>
-          <span class="text-[11px] text-purple-400/80 mt-1">Competing theories</span>
-        </div>
-
-        <!-- Leading Hypothesis Score -->
-        <div class="bg-gray-800/90 border border-blue-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
-          <span class="text-xs uppercase font-semibold text-blue-400">Leading Score</span>
-          <div class="text-2xl sm:text-3xl font-extrabold text-blue-300 font-mono mt-2">
-            {{ leadingHypothesis ? leadingHypothesis.score?.toFixed(2) : '0.00' }}
-          </div>
-          <span class="text-[11px] text-blue-400/80 mt-1 truncate" :title="leadingHypothesis?.title || 'None'">
-            {{ leadingHypothesis ? leadingHypothesis.title : 'None active' }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Investigation Intelligence Signals Area -->
-      <InvestigationSignals 
-        :evidence="evidence" 
-        :hypotheses="hypotheses" 
-        :relationships="caseRelationships" 
+      <!-- 0. EXECUTIVE INVESTIGATION BRIEF (STATUS & ATTENTION) -->
+      <InvestigationBrief
+        :case-item="caseItem"
+        :evidence="evidence"
+        :hypotheses="hypotheses"
+        :relationships="caseRelationships"
         :score-history="scoreHistory"
-        @open-history="() => openScoreHistoryDrawer()"
+        @navigate-tab="(targetTab) => tab = targetTab"
+        @open-add-evidence="openAddEvidenceModal"
+        @open-create-hypothesis="openCreateHypothesisModal"
+        @open-link-evidence="openLinkEvidenceModal(null)"
+        @review-unverified="quickReviewPendingEvidence"
       />
 
-      <!-- Investigation Intelligence Summary & Velocity Bar -->
-      <div v-if="intelligenceSummary" class="bg-gray-900/90 border border-purple-900/40 rounded-xl p-4 shadow-lg space-y-3">
-        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-          <div class="flex items-center space-x-2">
-            <span class="text-purple-400 font-bold text-sm">📈</span>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-200">Investigation Intelligence & Score Evolution Summary</h3>
+      <!-- 1. CORE TWO-COLUMN INVESTIGATION WORKSPACE -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- LEFT COLUMN: EVIDENCE DOSSIER -->
+        <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 p-5 flex flex-col justify-between shadow-sm space-y-4">
+          <div class="space-y-3">
+            <!-- Column Header -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-white font-mono">EVIDENCE DOSSIER</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-blue-400 border border-slate-700 font-bold">
+                  {{ evidence.length }}
+                </span>
+              </div>
+              <button 
+                @click="openAddEvidenceModal" 
+                class="text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold font-mono px-2.5 py-1 rounded transition shadow flex items-center space-x-1"
+              >
+                <span>+ Add Evidence</span>
+              </button>
+            </div>
+
+            <!-- Empty Evidence State -->
+            <div v-if="evidence.length === 0" class="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-lg">
+              <p class="text-xs font-mono">No evidence ingested for this case yet.</p>
+              <button @click="openAddEvidenceModal" class="mt-2 text-xs text-blue-400 hover:underline font-mono">+ Ingest first artifact</button>
+            </div>
+
+            <!-- Evidence List -->
+            <div v-else class="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+              <div 
+                v-for="ev in evidence.slice(0, 6)" 
+                :key="ev._id"
+                class="bg-[#0D1322]/90 border border-slate-800/80 rounded-lg p-3 hover:border-slate-700 transition flex flex-col justify-between space-y-2 group"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <div class="space-y-0.5 min-w-0">
+                    <div class="flex items-center space-x-2">
+                      <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                        {{ ev._id }}
+                      </span>
+                      <span class="text-xs font-bold text-white group-hover:text-blue-400 transition truncate">
+                        {{ ev.title }}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 font-mono truncate">
+                      Source: {{ ev.source || 'Direct Telemetry' }} • Confidence: <strong class="text-slate-200">{{ ev.confidenceScore || 50 }}%</strong>
+                    </p>
+                  </div>
+
+                  <span :class="verificationBadgeClass(ev.verificationState)" class="text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase whitespace-nowrap">
+                    {{ ev.verificationState || 'UNVERIFIED' }}
+                  </span>
+                </div>
+
+                <!-- Action row -->
+                <div class="flex items-center justify-between pt-2 border-t border-slate-800/60 font-mono text-[11px]">
+                  <div class="flex items-center space-x-1.5">
+                    <button 
+                      @click="verifyEvidenceItem(ev._id, 'VERIFIED')" 
+                      class="px-2 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-800/60 text-[10px]"
+                      title="Mark as Verified"
+                    >
+                      ✓ Verify
+                    </button>
+                    <button 
+                      @click="verifyEvidenceItem(ev._id, 'DISPUTED')" 
+                      class="px-2 py-0.5 rounded bg-amber-950/80 hover:bg-amber-800 text-amber-300 border border-amber-800/60 text-[10px]"
+                      title="Mark as Disputed"
+                    >
+                      ⚠ Dispute
+                    </button>
+                    <button 
+                      @click="verifyEvidenceItem(ev._id, 'REJECTED')" 
+                      class="px-2 py-0.5 rounded bg-rose-950/80 hover:bg-rose-800 text-rose-300 border border-rose-800/60 text-[10px]"
+                      title="Mark as Rejected"
+                    >
+                      ✕ Reject
+                    </button>
+                  </div>
+
+                  <button 
+                    @click="openEvidenceDetailDrawer(ev)" 
+                    class="text-blue-400 hover:text-blue-300 font-semibold"
+                  >
+                    Inspect ➔
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <button 
-            @click="openScoreHistoryDrawer()" 
-            class="text-[10px] font-mono text-purple-400 hover:text-purple-300 font-bold underline"
-          >
-            Inspect Full History ({{ scoreHistory.length }} events) ➔
-          </button>
+
+          <!-- Bottom Link to Full Evidence View -->
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-500">{{ verifiedEvidenceCount }} verified of {{ evidence.length }} total</span>
+            <button @click="tab = 'evidence'" class="text-blue-400 hover:text-blue-300 font-semibold">
+              View Full Evidence Catalog ({{ evidence.length }}) ➔
+            </button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <!-- Leading Theory & Momentum -->
-          <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-            <span class="text-gray-400 block text-[10px] uppercase font-bold">Leading Theory Momentum</span>
-            <div class="text-white font-bold truncate">
-              {{ intelligenceSummary.leadingTheory?.title || 'None active' }}
+        <!-- RIGHT COLUMN: COMPETING HYPOTHESES -->
+        <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 p-5 flex flex-col justify-between shadow-sm space-y-4">
+          <div class="space-y-3">
+            <!-- Column Header -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-white font-mono">COMPETING HYPOTHESES</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-purple-400 border border-slate-700 font-bold">
+                  {{ hypotheses.length }}
+                </span>
+              </div>
+              <button 
+                @click="openCreateHypothesisModal" 
+                class="text-xs bg-purple-600 hover:bg-purple-500 text-white font-semibold font-mono px-2.5 py-1 rounded transition shadow flex items-center space-x-1"
+              >
+                <span>+ New Hypothesis</span>
+              </button>
             </div>
-            <div class="font-mono text-[11px] flex items-center space-x-2">
-              <span :class="(intelligenceSummary.leadingTheory?.score || 0) > 0 ? 'text-emerald-400' : 'text-rose-400'">
-                Score: {{ (intelligenceSummary.leadingTheory?.score || 0).toFixed(2) }}
-              </span>
-              <span v-if="intelligenceSummary.leadingTheory?.netMovement" class="text-gray-400 text-[10px]">
-                (Net: {{ intelligenceSummary.leadingTheory.netMovement > 0 ? '+' : '' }}{{ intelligenceSummary.leadingTheory.netMovement.toFixed(2) }})
-              </span>
+
+            <!-- Empty Hypotheses State -->
+            <div v-if="hypotheses.length === 0" class="py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-lg">
+              <p class="text-xs font-mono">No competing hypotheses formulated yet.</p>
+              <button @click="openCreateHypothesisModal" class="mt-2 text-xs text-purple-400 hover:underline font-mono">+ Formulate first theory</button>
+            </div>
+
+            <!-- Hypotheses Ranked List -->
+            <div v-else class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+              <div 
+                v-for="(hyp, idx) in hypotheses" 
+                :key="hyp._id"
+                class="bg-[#0D1322]/90 border rounded-lg p-3.5 transition flex flex-col justify-between space-y-2.5"
+                :class="idx === 0 ? 'border-purple-600/70 bg-gradient-to-r from-[#0D1322] to-purple-950/20' : 'border-slate-800/80 hover:border-slate-700'"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="space-y-1 flex-1">
+                    <div class="flex items-center space-x-2">
+                      <span 
+                        class="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider"
+                        :class="idx === 0 ? 'bg-purple-950 text-purple-300 border border-purple-700' : 'bg-slate-900 text-slate-400 border border-slate-700'"
+                      >
+                        {{ idx === 0 ? '★ LEADING THEORY' : `Rank #${idx + 1}` }}
+                      </span>
+                      <span class="text-[10px] font-mono text-slate-400">{{ hyp._id }}</span>
+                    </div>
+
+                    <h4 class="text-sm font-bold text-white font-mono uppercase leading-snug">{{ hyp.title }}</h4>
+                    <p v-if="hyp.description" class="text-[11px] text-slate-400 line-clamp-1">{{ hyp.description }}</p>
+                  </div>
+
+                  <div class="text-right flex-shrink-0 bg-[#0B0F19] px-3 py-1.5 rounded-lg border border-slate-800 font-mono">
+                    <div class="text-[9px] uppercase text-slate-500 font-bold">Score</div>
+                    <div class="text-lg font-black" :class="(hyp.score || 0) > 0 ? 'text-emerald-400' : (hyp.score || 0) < 0 ? 'text-rose-400' : 'text-slate-400'">
+                      {{ (hyp.score || 0) > 0 ? '+' : '' }}{{ (hyp.score || 0).toFixed(2) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Explanation & Action Footer -->
+                <div class="flex items-center justify-between pt-2 border-t border-slate-800/60 font-mono text-[11px]">
+                  <button 
+                    @click="openExplainabilityModal(hyp)" 
+                    class="text-blue-400 hover:text-blue-300 font-semibold"
+                  >
+                    Why this score? ➔
+                  </button>
+
+                  <div class="flex items-center space-x-2">
+                    <button 
+                      @click="openScoreHistoryDrawer(hyp)" 
+                      class="text-purple-400 hover:text-purple-300 font-semibold"
+                    >
+                      What changed?
+                    </button>
+                    <button 
+                      v-if="evidence.length > 0"
+                      @click="openLinkEvidenceModal(hyp._id)" 
+                      class="text-slate-300 hover:text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700"
+                    >
+                      + Link Evidence
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Top Positive Catalyst -->
-          <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-            <span class="text-emerald-400 block text-[10px] uppercase font-bold">Top Positive Score Catalyst</span>
-            <div v-if="intelligenceSummary.topPositiveDriver" class="space-y-0.5">
-              <div class="text-white font-bold truncate">
-                {{ intelligenceSummary.topPositiveDriver.evidenceTitle || intelligenceSummary.topPositiveDriver.hypothesisTitle }}
-              </div>
-              <div class="font-mono text-emerald-300 text-[11px]">
-                ▲ +{{ Number(intelligenceSummary.topPositiveDriver.delta).toFixed(2) }} ({{ intelligenceSummary.topPositiveDriver.triggerType }})
-              </div>
-            </div>
-            <div v-else class="text-gray-500 italic text-[11px]">No positive mutations yet</div>
-          </div>
-
-          <!-- Total Score Mutations & Velocity -->
-          <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-            <span class="text-purple-300 block text-[10px] uppercase font-bold">Intelligence Velocity</span>
-            <div class="text-white font-mono font-bold">
-              {{ scoreHistory.length }} Historical Events
-            </div>
-            <div class="text-gray-400 text-[10px] truncate">
-              {{ evidence.length }} evidence items • {{ caseRelationships.length }} relational links
-            </div>
+          <!-- Bottom Link to Full Hypotheses View -->
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-500">Mathematical Bayes scoring active</span>
+            <button @click="tab = 'hypotheses'" class="text-purple-400 hover:text-purple-300 font-semibold">
+              Compare All Hypotheses ({{ hypotheses.length }}) ➔
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Main Overview Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- 7. INVESTIGATION ATTENTION / NEEDS ATTENTION AREA -->
-        <div class="lg:col-span-1 space-y-4">
-          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow">
-            <div class="flex items-center justify-between mb-4 border-b border-gray-700 pb-3">
-              <div class="flex items-center space-x-2">
-                <span class="text-amber-400 text-lg">⚠️</span>
-                <h3 class="text-base font-bold text-white">Investigation Attention</h3>
-              </div>
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 text-gray-300 border border-gray-700">
-                {{ attentionItems.length }} Items
-              </span>
+      <!-- 2. DEEP INTELLIGENCE NAVIGATION HUB (MAP, TIMELINE, AUDIT) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Evidence Map Card -->
+        <div 
+          @click="tab = 'map'"
+          class="bg-[#0B0F19] hover:bg-[#0D1322] border border-slate-800/90 hover:border-blue-500/60 p-4 rounded-xl cursor-pointer transition group shadow-sm flex items-center justify-between font-mono"
+        >
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold uppercase text-white group-hover:text-blue-400 transition flex items-center space-x-1.5">
+              <span>Evidence Map</span>
+              <span class="text-blue-400 font-normal">➔</span>
             </div>
-
-            <!-- Empty State -->
-            <div v-if="attentionItems.length === 0" class="text-center py-8 px-4 bg-gray-900/60 rounded-lg border border-gray-700/60">
-              <span class="text-emerald-400 text-2xl block mb-2">✓</span>
-              <p class="text-xs font-semibold text-gray-300">All Case Items Operational</p>
-              <p class="text-[11px] text-gray-500 mt-1">All collected evidence is verified, hypotheses are linked, and no conflicts are unresolved.</p>
-            </div>
-
-            <!-- Attention Items List -->
-            <div v-else class="space-y-3">
-              <div 
-                v-for="(item, idx) in attentionItems" 
-                :key="idx"
-                class="p-3 rounded-lg border text-xs transition space-y-1.5"
-                :class="item.severity === 'high' ? 'bg-rose-950/40 border-rose-800 text-rose-200' : 'bg-amber-950/40 border-amber-800 text-amber-200'"
-              >
-                <div class="flex items-center justify-between font-bold">
-                  <span>{{ item.title }}</span>
-                  <span class="uppercase text-[10px] font-mono px-1.5 py-0.5 rounded" :class="item.severity === 'high' ? 'bg-rose-900 text-rose-200' : 'bg-amber-900 text-amber-200'">
-                    {{ item.type }}
-                  </span>
-                </div>
-                <p class="text-[11px] opacity-90 leading-relaxed">{{ item.description }}</p>
-                <div class="pt-1 flex justify-end">
-                  <button 
-                    @click="handleAttentionAction(item)"
-                    class="text-[10px] font-semibold underline hover:opacity-100 opacity-80"
-                  >
-                    {{ item.actionLabel }} ➔
-                  </button>
-                </div>
-              </div>
-            </div>
+            <p class="text-[11px] text-slate-400">Interactive node-graph of artifacts & theories</p>
           </div>
-
-          <!-- Quick Case Health Card -->
-          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow space-y-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Intelligence Consensus Health</h3>
-            <div class="space-y-2 text-xs">
-              <div class="flex justify-between items-center text-gray-300">
-                <span>Evidence Verification Ratio:</span>
-                <span class="font-mono font-bold text-white">{{ verificationRatio }}%</span>
-              </div>
-              <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full transition-all duration-500" :style="{ width: verificationRatio + '%' }"></div>
-              </div>
-
-              <div class="flex justify-between items-center text-gray-300 pt-2">
-                <span>Leading Theory Confidence:</span>
-                <span class="font-mono font-bold text-white">
-                  {{ leadingHypothesis ? Math.min(100, Math.max(0, Math.round(leadingHypothesis.score * 10))) : 0 }}%
-                </span>
-              </div>
-              <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden">
-                <div 
-                  class="bg-blue-500 h-full transition-all duration-500" 
-                  :style="{ width: (leadingHypothesis ? Math.min(100, Math.max(0, Math.round(leadingHypothesis.score * 10))) : 0) + '%' }"
-                ></div>
-              </div>
-            </div>
-          </div>
+          <span class="text-xs text-blue-400 font-bold bg-blue-950/60 border border-blue-800/40 px-2 py-1 rounded">
+            {{ caseRelationships.length }} Links
+          </span>
         </div>
 
-        <!-- Leading Hypothesis & Top Evidence Dossier -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Leading Hypothesis Card -->
-          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow">
-            <div class="flex items-center justify-between mb-3 border-b border-gray-700 pb-3">
-              <div class="flex items-center space-x-2">
-                <span class="text-purple-400 font-bold text-lg">💡</span>
-                <h3 class="text-base font-bold text-white">Ranked Leading Hypothesis</h3>
-              </div>
-              <button @click="tab = 'hypotheses'" class="text-xs text-blue-400 hover:underline font-medium">
-                View All Hypotheses ({{ hypotheses.length }}) ➔
-              </button>
+        <!-- Timeline Stream Card -->
+        <div 
+          @click="tab = 'timeline'"
+          class="bg-[#0B0F19] hover:bg-[#0D1322] border border-slate-800/90 hover:border-amber-500/60 p-4 rounded-xl cursor-pointer transition group shadow-sm flex items-center justify-between font-mono"
+        >
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold uppercase text-white group-hover:text-amber-400 transition flex items-center space-x-1.5">
+              <span>Timeline Stream</span>
+              <span class="text-amber-400 font-normal">➔</span>
             </div>
-
-            <div v-if="!leadingHypothesis" class="text-center py-8 text-xs text-gray-400">
-              No hypotheses formulated. Click "+ Create Hypothesis" to begin comparative analysis.
-            </div>
-
-            <div v-else class="space-y-4">
-              <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-gray-900/80 p-4 rounded-xl border border-gray-700">
-                <div class="space-y-1">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-mono font-bold">
-                      #1 RANKED
-                    </span>
-                    <h4 class="text-base font-bold text-white">{{ leadingHypothesis.title }}</h4>
-                  </div>
-                  <p class="text-xs text-gray-300 leading-relaxed">{{ leadingHypothesis.description || 'No theory summary.' }}</p>
-                </div>
-                <div class="text-right sm:self-center">
-                  <div class="text-[10px] uppercase font-bold text-gray-400">Calculated Score</div>
-                  <div class="text-2xl font-black font-mono" :class="leadingHypothesis.score > 0 ? 'text-emerald-400' : 'text-rose-400'">
-                    {{ (leadingHypothesis.score || 0).toFixed(2) }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Top Explainability Snippet -->
-              <div class="bg-gray-900/50 p-3.5 rounded-lg border border-gray-700/60 text-xs">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="font-semibold text-gray-300 uppercase tracking-wider">Top Mathematical Factor:</span>
-                  <button @click="openExplainabilityModal(leadingHypothesis)" class="text-xs text-indigo-400 hover:underline font-mono">
-                    Why this score? ➔
-                  </button>
-                </div>
-                <div v-if="leadingHypothesis.explainability && leadingHypothesis.explainability.length > 0" class="font-mono text-emerald-300 text-xs bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
-                  {{ leadingHypothesis.explainability[0] }}
-                </div>
-                <div v-else class="text-xs text-gray-500 italic">No linked evidence relationships yet.</div>
-              </div>
-            </div>
+            <p class="text-[11px] text-slate-400">Chronological incident & event trajectory</p>
           </div>
+          <span class="text-xs text-amber-400 font-bold bg-amber-950/60 border border-amber-800/40 px-2 py-1 rounded">
+            {{ timelineLogs.length }} Events
+          </span>
+        </div>
 
-          <!-- Recent Evidence Ingested -->
-          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow">
-            <div class="flex items-center justify-between mb-3 border-b border-gray-700 pb-3">
-              <div class="flex items-center space-x-2">
-                <span class="text-blue-400 font-bold text-lg">📁</span>
-                <h3 class="text-base font-bold text-white">Recent Case Evidence</h3>
-              </div>
-              <button @click="tab = 'evidence'" class="text-xs text-blue-400 hover:underline font-medium">
-                Open Full Evidence Catalog ({{ evidence.length }}) ➔
-              </button>
+        <!-- Audit Trail Card -->
+        <div 
+          @click="tab = 'audit'"
+          class="bg-[#0B0F19] hover:bg-[#0D1322] border border-slate-800/90 hover:border-emerald-500/60 p-4 rounded-xl cursor-pointer transition group shadow-sm flex items-center justify-between font-mono"
+        >
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold uppercase text-white group-hover:text-emerald-400 transition flex items-center space-x-1.5">
+              <span>Audit Trail</span>
+              <span class="text-emerald-400 font-normal">➔</span>
             </div>
-
-            <div v-if="evidence.length === 0" class="text-center py-8 text-xs text-gray-400">
-              No evidence ingested yet.
-            </div>
-
-            <div v-else class="space-y-2.5">
-              <div 
-                v-for="ev in evidence.slice(0, 4)" 
-                :key="ev._id"
-                class="bg-gray-900/70 border border-gray-700/80 p-3 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-2 hover:border-gray-600 transition"
-              >
-                <div class="space-y-0.5">
-                  <div class="flex items-center space-x-2">
-                    <span class="font-semibold text-white text-xs">{{ ev.title }}</span>
-                    <span class="text-[10px] font-mono text-gray-400">({{ ev.type || 'Digital' }})</span>
-                  </div>
-                  <div class="text-[11px] text-gray-400">
-                    Source: {{ ev.source || 'Direct Telemetry' }} • Confidence: <strong class="text-gray-200">{{ ev.confidenceScore }}%</strong>
-                  </div>
-                </div>
-
-                <div class="flex items-center space-x-2 self-end sm:self-auto">
-                  <span :class="verificationBadgeClass(ev.verificationState)" class="text-[10px] px-2 py-0.5 rounded font-mono font-bold">
-                    {{ ev.verificationState || 'UNVERIFIED' }}
-                  </span>
-                  <button 
-                    @click="openEvidenceDetailDrawer(ev)" 
-                    class="text-xs px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700 transition"
-                  >
-                    Details
-                  </button>
-                </div>
-              </div>
-            </div>
+            <p class="text-[11px] text-slate-400">Tamper-evident forensic execution logs</p>
           </div>
+          <span class="text-xs text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/40 px-2 py-1 rounded">
+            Verified
+          </span>
         </div>
       </div>
     </div>
@@ -661,210 +690,14 @@
 
     <!-- ==================== TAB 3: EVIDENCE MAP (GRAPH) ==================== -->
     <div v-if="tab === 'map'" class="space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-        <div>
-          <h2 class="text-lg font-bold text-white">Interactive Evidence Map</h2>
-          <p class="text-xs text-gray-400">Visual relational graph showing links between collected evidence nodes and competing hypotheses.</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-xs text-gray-400 font-medium">Filter links:</span>
-          <select v-model="mapLinkFilter" class="bg-gray-800 border border-gray-700 text-xs text-gray-300 rounded-lg px-3 py-1.5">
-            <option value="ALL">All Relations ({{ caseRelationships.length }})</option>
-            <option value="SUPPORT">Support Only (+)</option>
-            <option value="CONTRADICT">Contradict Only (-)</option>
-          </select>
-        </div>
-      </div>
-
-      <div v-if="evidence.length === 0 && hypotheses.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-xl p-12 text-center text-gray-400 text-sm">
-        Add evidence and hypotheses to generate the intelligence relationship graph.
-      </div>
-
-      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Interactive Graph Area -->
-        <div class="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-xl p-5 relative min-h-[460px] overflow-hidden flex flex-col justify-between shadow-xl">
-          <!-- Graph Legend -->
-          <div class="flex flex-wrap items-center gap-4 text-xs text-gray-400 border-b border-gray-800 pb-3 mb-4 font-mono">
-            <div class="flex items-center space-x-1.5">
-              <span class="w-3 h-3 rounded bg-blue-600 inline-block"></span>
-              <span class="text-gray-300">Evidence Nodes</span>
-            </div>
-            <div class="flex items-center space-x-1.5">
-              <span class="w-3 h-3 rounded bg-purple-600 inline-block"></span>
-              <span class="text-gray-300">Hypothesis Nodes</span>
-            </div>
-            <div class="flex items-center space-x-1.5">
-              <span class="w-4 h-0.5 bg-emerald-500 inline-block"></span>
-              <span class="text-emerald-400 font-medium">SUPPORT Link</span>
-            </div>
-            <div class="flex items-center space-x-1.5">
-              <span class="w-4 h-0.5 bg-rose-500 inline-block"></span>
-              <span class="text-rose-400 font-medium">CONTRADICT Link</span>
-            </div>
-          </div>
-
-          <!-- Nodes Columns -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2 relative z-10">
-            <!-- Left: Evidence Column -->
-            <div class="space-y-2.5">
-              <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1 flex justify-between">
-                <span>Evidence Items</span>
-                <span>({{ evidence.length }})</span>
-              </div>
-              <div 
-                v-for="evNode in evidence" 
-                :key="evNode._id"
-                @click="selectGraphNode('evidence', evNode)"
-                :class="[
-                  selectedGraphItem?.id === evNode._id ? 'ring-2 ring-blue-400 bg-blue-950/60 border-blue-500' : 'bg-gray-800/90 border-gray-700 hover:border-blue-400/60',
-                  'p-3 rounded-lg border cursor-pointer transition flex flex-col justify-between shadow'
-                ]"
-              >
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-white truncate max-w-[170px]">{{ evNode.title }}</span>
-                  <span :class="verificationBadgeClass(evNode.verificationState)" class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">
-                    {{ evNode.verificationState }}
-                  </span>
-                </div>
-                <div class="text-[11px] text-gray-400 mt-1 flex justify-between">
-                  <span>{{ evNode.type }}</span>
-                  <span class="font-mono text-gray-300">Conf: {{ evNode.confidenceScore }}%</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right: Hypotheses Column -->
-            <div class="space-y-2.5">
-              <div class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1 flex justify-between">
-                <span>Hypotheses</span>
-                <span>({{ hypotheses.length }})</span>
-              </div>
-              <div 
-                v-for="hypNode in rankedHypotheses" 
-                :key="hypNode._id"
-                @click="selectGraphNode('hypothesis', hypNode)"
-                :class="[
-                  selectedGraphItem?.id === hypNode._id ? 'ring-2 ring-purple-400 bg-purple-950/60 border-purple-500' : 'bg-gray-800/90 border-gray-700 hover:border-purple-400/60',
-                  'p-3 rounded-lg border cursor-pointer transition flex flex-col justify-between shadow'
-                ]"
-              >
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-white truncate max-w-[170px]">{{ hypNode.title }}</span>
-                  <span class="text-xs font-mono font-bold" :class="hypNode.score > 0 ? 'text-emerald-400' : hypNode.score < 0 ? 'text-rose-400' : 'text-gray-400'">
-                    {{ hypNode.score?.toFixed(2) }}
-                  </span>
-                </div>
-                <div class="text-[11px] text-gray-400 mt-1 flex justify-between">
-                  <span>{{ (hypNode.explainability || []).length }} contributing links</span>
-                  <span class="text-purple-300 text-[10px]">Inspect ➔</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Active Relationships List at bottom -->
-          <div class="border-t border-gray-800 pt-3 mt-4">
-            <div class="text-xs font-bold uppercase text-gray-400 mb-2">Active Graph Relationships ({{ filteredGraphRelationships.length }})</div>
-            <div v-if="filteredGraphRelationships.length === 0" class="text-xs text-gray-500 italic">No relationships mapped. Use "+ Link Evidence" to construct graph edges.</div>
-            <div v-else class="flex flex-wrap gap-2">
-              <div 
-                v-for="rel in filteredGraphRelationships" 
-                :key="rel._id"
-                @click="selectGraphRelationship(rel)"
-                :class="[
-                  rel.type === 'SUPPORT' ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-rose-950/60 border-rose-800 text-rose-300',
-                  'text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:opacity-90 font-mono transition shadow-sm'
-                ]"
-              >
-                {{ getEvidenceTitle(rel.evidenceId) }} ➔ {{ rel.type }} (weight: {{ rel.strength }}) ➔ {{ getHypothesisTitle(rel.hypothesisId) }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Node / Link Details Inspector Panel -->
-        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 flex flex-col justify-between shadow-xl">
-          <div>
-            <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-gray-200">Entity Inspector</h3>
-              <span v-if="selectedGraphItem" class="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-300 font-mono font-bold">
-                {{ selectedGraphItem.type.toUpperCase() }}
-              </span>
-            </div>
-
-            <div v-if="!selectedGraphItem" class="py-16 text-center text-xs text-gray-400 space-y-2">
-              <div class="text-2xl">🔍</div>
-              <p>Click on any evidence node, hypothesis card, or relationship in the map to inspect its data and mathematical contributions.</p>
-            </div>
-
-            <div v-else class="space-y-4 text-xs">
-              <div>
-                <div class="text-gray-400 uppercase text-[10px] font-bold">Title</div>
-                <div class="font-bold text-white text-sm mt-0.5">{{ selectedGraphItem.data.title || selectedGraphItem.data.name || 'Relationship Link' }}</div>
-              </div>
-
-              <div v-if="selectedGraphItem.type === 'evidence'" class="space-y-3">
-                <div class="grid grid-cols-2 gap-2 bg-gray-900/80 p-3 rounded-lg border border-gray-700 font-mono text-[11px]">
-                  <div>
-                    <span class="text-gray-400 block text-[10px]">Verification:</span>
-                    <span class="text-white font-bold">{{ selectedGraphItem.data.verificationState }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-400 block text-[10px]">Confidence:</span>
-                    <span class="text-white font-bold">{{ selectedGraphItem.data.confidenceScore }}%</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-400 block text-[10px]">Type:</span>
-                    <span class="text-white font-bold">{{ selectedGraphItem.data.type }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-400 block text-[10px]">Source:</span>
-                    <span class="text-white font-bold">{{ selectedGraphItem.data.source || 'N/A' }}</span>
-                  </div>
-                </div>
-                <div class="text-gray-300 bg-gray-900/40 p-2.5 rounded border border-gray-700/50">
-                  {{ selectedGraphItem.data.description || 'No description provided.' }}
-                </div>
-              </div>
-
-              <div v-if="selectedGraphItem.type === 'hypothesis'" class="space-y-3">
-                <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 font-mono text-[11px]">
-                  <span class="text-gray-400 block text-[10px]">Calculated Score:</span>
-                  <span class="text-lg font-black" :class="selectedGraphItem.data.score > 0 ? 'text-emerald-400' : 'text-rose-400'">
-                    {{ selectedGraphItem.data.score?.toFixed(2) }}
-                  </span>
-                </div>
-                <div class="text-xs font-bold text-gray-300 uppercase">Active Formula Contributions:</div>
-                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  <div 
-                    v-for="(exp, idx) in selectedGraphItem.data.explainability || []" 
-                    :key="idx"
-                    class="p-2 rounded text-[11px] font-mono"
-                    :class="exp.startsWith('+') ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/40 text-rose-300 border border-rose-800/40'"
-                  >
-                    {{ exp }}
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="selectedGraphItem.type === 'relationship'" class="space-y-3">
-                <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 font-mono text-[11px] space-y-1.5">
-                  <div><span class="text-gray-400">Type:</span> <strong class="text-white">{{ selectedGraphItem.data.type }}</strong></div>
-                  <div><span class="text-gray-400">Strength Weight:</span> <strong class="text-white">{{ selectedGraphItem.data.strength }} / 10</strong></div>
-                  <div><span class="text-gray-400">Evidence:</span> <span class="text-blue-300">{{ getEvidenceTitle(selectedGraphItem.data.evidenceId) }}</span></div>
-                  <div><span class="text-gray-400">Hypothesis:</span> <span class="text-purple-300">{{ getHypothesisTitle(selectedGraphItem.data.hypothesisId) }}</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="selectedGraphItem" class="pt-4 border-t border-gray-700 mt-4">
-            <button @click="selectedGraphItem = null" class="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded-lg font-semibold transition">
-              Close Inspector
-            </button>
-          </div>
-        </div>
-      </div>
+      <EvidenceMapGraph
+        :evidence="evidence"
+        :hypotheses="hypotheses"
+        :relationships="caseRelationships"
+        @open-link-modal="openLinkEvidenceModal(null)"
+        @open-evidence-drawer="(ev) => openEvidenceDetailDrawer(ev)"
+        @open-hypothesis-drawer="(hyp) => openExplainabilityModal(hyp)"
+      />
     </div>
 
     <!-- ==================== TAB 4: INVESTIGATION TIMELINE ==================== -->
@@ -993,6 +826,16 @@
       :audit-logs="timelineLogs" 
       @close="selectedEvidenceDetail = null" 
       @verify="({ id, state }) => verifyEvidenceItem(id, state)" 
+      @open-in-map="(evId) => { tab = 'map'; selectedEvidenceDetail = null; }"
+    />
+
+    <!-- ==================== RESOLVE CASE SIGN-OFF MODAL ==================== -->
+    <ResolveCaseModal
+      v-if="showResolveModal"
+      :case-item="caseItem"
+      :hypotheses="hypotheses"
+      @close="showResolveModal = false"
+      @resolve="handleResolveCase"
     />
 
     <!-- ==================== EXPLAINABILITY MODAL ==================== -->
@@ -1198,16 +1041,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { apiFetch } from '../utils/api';
 import InvestigationSignals from '../components/InvestigationSignals.vue';
+import InvestigationBrief from '../components/InvestigationBrief.vue';
 import EvidenceIntelligenceCard from '../components/EvidenceIntelligenceCard.vue';
 import EvidenceDetailDrawer from '../components/EvidenceDetailDrawer.vue';
+import EvidenceMapGraph from '../components/EvidenceMapGraph.vue';
 import HypothesisCard from '../components/HypothesisCard.vue';
 import HypothesisComparisonView from '../components/HypothesisComparisonView.vue';
 import WhyThisScoreModal from '../components/WhyThisScoreModal.vue';
 import InvestigationHistoryDrawer from '../components/InvestigationHistoryDrawer.vue';
+import ReviewModeBanner from '../components/ReviewModeBanner.vue';
+import ResolveCaseModal from '../components/ResolveCaseModal.vue';
 
 const route = useRoute();
 
@@ -1227,6 +1074,7 @@ const intelligenceSummary = ref(null);
 
 // History Drawer State
 const showHistoryDrawer = ref(false);
+const showResolveModal = ref(false);
 const selectedHistoryHypothesis = ref(null);
 
 const loading = ref(true);
@@ -1284,6 +1132,37 @@ const showNotification = (text, type = 'success') => {
     }
   }, 4000);
 };
+
+const copyCaseId = async () => {
+  if (!caseItem.value?._id) return;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(caseItem.value._id);
+    }
+    showNotification(`Case UUID ${caseItem.value._id.substring(0, 8)}... copied to clipboard`);
+  } catch (e) {
+    showNotification(`Case ID: ${caseItem.value._id}`);
+  }
+};
+
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape') {
+    if (showAddEvidenceModal.value) showAddEvidenceModal.value = false;
+    if (showCreateHypothesisModal.value) showCreateHypothesisModal.value = false;
+    if (showLinkEvidenceModal.value) showLinkEvidenceModal.value = false;
+    if (selectedEvidenceDetail.value) selectedEvidenceDetail.value = null;
+    if (selectedExplainHypothesis.value) selectedExplainHypothesis.value = null;
+    if (showHistoryDrawer.value) showHistoryDrawer.value = false;
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 
 const investigatorName = computed(() => {
   if (!caseItem.value) return 'Investigator';
@@ -1509,7 +1388,14 @@ const fetchCaseData = async () => {
       apiFetch(`/api/cases/${route.params.id}/intelligence-summary`)
     ]);
     
-    if (caseData.success && caseData.data) caseItem.value = caseData.data;
+    if (caseData.success && caseData.data) {
+      caseItem.value = caseData.data;
+      try {
+        localStorage.setItem('blackbox_last_case_id', route.params.id);
+      } catch (e) {
+        // ignore localStorage errors
+      }
+    }
     if (evData.success && Array.isArray(evData.data)) evidence.value = evData.data;
     if (hypData.success && Array.isArray(hypData.data)) {
       hypData.data.forEach(h => {
@@ -1573,6 +1459,40 @@ const updateStatus = async () => {
   } catch (err) {
     console.error(err);
     showNotification('Error updating case status', 'error');
+  } finally {
+    statusUpdating.value = false;
+  }
+};
+
+const handleResumeInvestigation = async () => {
+  if (!caseItem.value) return;
+  caseItem.value.status = 'INVESTIGATING';
+  await updateStatus();
+};
+
+const handleResolveCase = async ({ acceptedHypothesisId, resolutionNotes }) => {
+  statusUpdating.value = true;
+  try {
+    const res = await apiFetch(`/api/cases/${route.params.id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ 
+        status: 'RESOLVED',
+        resolutionNotes,
+        acceptedHypothesisId
+      })
+    });
+    if (res.success) {
+      caseItem.value.status = 'RESOLVED';
+      showResolveModal.value = false;
+      showNotification('Case formally resolved and signed off');
+      await fetchTimeline();
+      await fetchCaseData();
+    } else {
+      showNotification(res.error || 'Failed to resolve case', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showNotification('Error resolving case', 'error');
   } finally {
     statusUpdating.value = false;
   }

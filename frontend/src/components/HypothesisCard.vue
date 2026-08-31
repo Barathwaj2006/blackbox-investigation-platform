@@ -1,30 +1,29 @@
 <template>
   <div 
-    class="bg-gray-800/95 rounded-xl shadow-lg border p-5 transition space-y-4"
-    :class="rank === 1 ? 'border-purple-600/80 ring-1 ring-purple-500/40 bg-gradient-to-b from-gray-800 to-purple-950/10' : 'border-gray-700 hover:border-gray-600'"
+    class="bg-[#0B0F19] rounded-xl border p-5 transition space-y-4 shadow-sm"
+    :class="rank === 1 ? 'border-purple-600/80 bg-gradient-to-b from-[#0D1322] to-[#120D22]' : 'border-slate-800/90 hover:border-slate-700'"
   >
     <!-- Top Row: Rank Badge, ID, Title, Score, Link Button -->
     <div class="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
       <div class="space-y-1.5 flex-1">
         <div class="flex flex-wrap items-center gap-2">
           <span 
-            class="text-xs px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider shadow-sm"
-            :class="rank === 1 ? 'bg-purple-900 text-purple-200 border border-purple-600' : 'bg-gray-900 text-gray-400 border border-gray-700'"
+            class="text-[11px] px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider shadow-sm"
+            :class="rank === 1 ? 'bg-purple-950 text-purple-300 border border-purple-700' : 'bg-slate-900 text-slate-400 border border-slate-700'"
           >
             {{ rank === 1 ? '★ LEADING THEORY' : `Rank #${rank}` }}
           </span>
-          <span class="text-[10px] font-mono text-gray-400 px-2 py-0.5 rounded bg-gray-900 border border-gray-800">
+          <span class="text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
             ID: {{ hypothesis._id }}
           </span>
           
           <!-- Score Change Indicator Delta Badge -->
           <span 
             v-if="scoreDelta" 
-            class="text-[11px] font-mono font-bold px-2 py-0.5 rounded flex items-center space-x-1 animate-fadeIn"
-            :class="scoreDelta.delta > 0 ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : scoreDelta.delta < 0 ? 'bg-rose-950 text-rose-300 border border-rose-700' : 'bg-gray-900 text-gray-400 border border-gray-700'"
+            class="text-[10px] font-mono font-bold px-2 py-0.5 rounded flex items-center space-x-1"
+            :class="scoreDelta.delta > 0 ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : scoreDelta.delta < 0 ? 'bg-rose-950 text-rose-300 border border-rose-700' : 'bg-slate-900 text-slate-400 border border-slate-700'"
           >
             <span>{{ scoreDelta.delta > 0 ? '▲ +' : scoreDelta.delta < 0 ? '▼ ' : '● ' }}{{ scoreDelta.delta.toFixed(2) }}</span>
-            <span class="text-[9px] opacity-75 font-normal">({{ scoreDelta.oldScore.toFixed(1) }} ➔ {{ scoreDelta.newScore.toFixed(1) }})</span>
           </span>
 
           <!-- What Changed Trigger -->
@@ -32,98 +31,78 @@
             @click="$emit('open-history', hypothesis)"
             class="text-[10px] font-mono font-bold text-purple-300 hover:text-purple-200 bg-purple-950/70 border border-purple-700/60 px-2 py-0.5 rounded transition flex items-center space-x-1"
           >
-            <span>⚡ What Changed?</span>
+            <span>What Changed?</span>
             <span v-if="hypothesisHistory.length > 0" class="text-[9px] bg-purple-900 text-purple-200 px-1 rounded-full">
               {{ hypothesisHistory.length }}
             </span>
           </button>
         </div>
 
-        <h3 class="text-xl font-extrabold text-white leading-tight">{{ hypothesis.title }}</h3>
-        <p v-if="hypothesis.description" class="text-sm text-gray-300 mt-1 max-w-4xl leading-relaxed">
+        <h3 class="text-lg sm:text-xl font-black text-white leading-tight font-mono uppercase">{{ hypothesis.title }}</h3>
+        <p v-if="hypothesis.description" class="text-xs sm:text-sm text-slate-300 mt-1 max-w-4xl leading-relaxed">
           {{ hypothesis.description }}
         </p>
       </div>
 
       <!-- Score KPI Display -->
-      <div class="flex items-center space-x-4 self-end sm:self-auto bg-gray-900/90 p-3 rounded-xl border border-gray-700/80 shadow-inner">
+      <div class="flex items-center space-x-3 self-end sm:self-auto bg-[#0D1322] px-3.5 py-2.5 rounded-xl border border-slate-700/80 shadow-inner">
         <div class="text-right">
-          <div class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Analytical Score</div>
-          <div class="text-2xl font-black font-mono" :class="hypothesis.score > 0 ? 'text-emerald-400' : hypothesis.score < 0 ? 'text-rose-400' : 'text-gray-400'">
+          <div class="text-[10px] uppercase text-slate-400 font-bold font-mono tracking-wider">Score</div>
+          <div class="text-2xl font-black font-mono" :class="hypothesis.score > 0 ? 'text-emerald-400' : hypothesis.score < 0 ? 'text-rose-400' : 'text-slate-400'">
             {{ hypothesis.score > 0 ? '+' : '' }}{{ (hypothesis.score || 0).toFixed(2) }}
           </div>
         </div>
         <button 
           v-if="hasEvidence"
           @click="$emit('link-evidence', hypothesis._id)" 
-          class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 rounded-lg transition shadow flex items-center space-x-1"
+          class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold font-mono px-3 py-1.5 rounded-lg transition shadow flex items-center space-x-1"
         >
-          <span>🔗 Link</span>
+          <span>+ Link</span>
         </button>
       </div>
     </div>
 
     <!-- Relational Factors & Strongest Factors Row -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-900/70 p-3.5 rounded-lg border border-gray-700/60 text-xs">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#0D1322]/80 p-3 rounded-lg border border-slate-800/80 text-xs font-mono">
       <div>
-        <span class="text-gray-400 block text-[10px] uppercase font-bold">Supporting Evidence:</span>
-        <span class="text-emerald-400 font-bold font-mono text-sm">+{{ supportCount }} items</span>
+        <span class="text-slate-400 block text-[10px] uppercase font-bold">Supporting:</span>
+        <span class="text-emerald-400 font-bold text-sm">+{{ supportCount }} items</span>
       </div>
       <div>
-        <span class="text-gray-400 block text-[10px] uppercase font-bold">Contradicting Evidence:</span>
-        <span class="text-rose-400 font-bold font-mono text-sm">-{{ contradictCount }} items</span>
+        <span class="text-slate-400 block text-[10px] uppercase font-bold">Contradicting:</span>
+        <span class="text-rose-400 font-bold text-sm">-{{ contradictCount }} items</span>
       </div>
       <div>
-        <span class="text-gray-400 block text-[10px] uppercase font-bold">Strongest Supporting:</span>
-        <span class="text-emerald-300 font-mono truncate block text-[11px]" :title="strongestSupportText">
+        <span class="text-slate-400 block text-[10px] uppercase font-bold">Strongest Sup:</span>
+        <span class="text-emerald-300 truncate block text-[11px]" :title="strongestSupportText">
           {{ strongestSupportText }}
         </span>
       </div>
       <div>
-        <span class="text-gray-400 block text-[10px] uppercase font-bold">Strongest Contradiction:</span>
-        <span class="text-rose-300 font-mono truncate block text-[11px]" :title="strongestContradictText">
+        <span class="text-slate-400 block text-[10px] uppercase font-bold">Strongest Con:</span>
+        <span class="text-rose-300 truncate block text-[11px]" :title="strongestContradictText">
           {{ strongestContradictText }}
         </span>
       </div>
     </div>
 
-    <!-- Score Evolution & Trend Section -->
-    <div v-if="hypothesisHistory.length > 0" class="space-y-2">
-      <ScoreTrendVisualizer 
-        :history="hypothesisHistory" 
-        :current-score="hypothesis.score || 0"
-        @select-history="(item) => $emit('open-history', hypothesis, item)"
-      />
-    </div>
-
-    <!-- Structured Explainability Accordion -->
-    <div class="bg-gray-900/90 border border-gray-700/80 p-4 rounded-xl space-y-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <span class="text-blue-400 text-sm">⚖️</span>
-          <span class="text-xs font-bold text-gray-200 uppercase tracking-wider">Score Explainability & Factor Contributions</span>
-        </div>
-        <button 
-          @click="$emit('open-explainability', hypothesis)" 
-          class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold underline flex items-center space-x-1"
-        >
-          <span>Why this score? (Full Breakdown)</span>
-        </button>
+    <!-- Explainability Action Bar -->
+    <div class="flex items-center justify-between pt-1 border-t border-slate-800/80">
+      <div class="text-[11px] text-slate-400 font-mono">
+        <span v-if="hypothesis.explainability && hypothesis.explainability.length > 0">
+          {{ hypothesis.explainability.length }} active mathematical evidence factors.
+        </span>
+        <span v-else class="text-slate-500 italic">
+          No evidence links yet.
+        </span>
       </div>
-
-      <div v-if="!hypothesis.explainability || hypothesis.explainability.length === 0" class="text-xs text-gray-500 italic py-2">
-        No evidence linked yet. Link supporting or contradicting evidence to compute mathematical scores.
-      </div>
-      <div v-else class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-        <div 
-          v-for="(exp, idx) in hypothesis.explainability" 
-          :key="idx" 
-          class="text-xs font-mono p-2.5 rounded-lg flex items-start space-x-2 shadow-sm"
-          :class="exp.startsWith('+') ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/40 text-rose-300 border border-rose-800/40'"
-        >
-          <span>{{ exp }}</span>
-        </div>
-      </div>
+      
+      <button 
+        @click="$emit('open-explainability', hypothesis)" 
+        class="text-xs text-blue-400 hover:text-blue-300 font-semibold font-mono flex items-center space-x-1"
+      >
+        <span>Why this score? (Explainability) ➔</span>
+      </button>
     </div>
   </div>
 </template>

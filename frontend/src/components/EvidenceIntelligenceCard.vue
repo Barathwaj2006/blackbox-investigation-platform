@@ -1,107 +1,84 @@
 <template>
-  <div class="bg-gray-800/95 rounded-xl shadow border border-gray-700 p-4.5 flex flex-col justify-between hover:border-gray-600 transition space-y-3">
-    <div class="space-y-3">
-      <!-- Header row: ID, Title, Source, Type, Verification State -->
+  <div class="bg-[#0B0F19] rounded-xl border border-slate-800/90 p-4 flex flex-col justify-between hover:border-slate-700 hover:bg-[#0D1322]/80 transition space-y-3 shadow-sm group">
+    <div class="space-y-2.5">
+      <!-- Header row: ID, Type, Verification Badge -->
       <div class="flex justify-between items-start gap-2">
-        <div class="space-y-1">
-          <div class="flex items-center space-x-2">
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 text-gray-400 border border-gray-700 font-semibold">
-              ID: {{ evidence._id }}
-            </span>
-            <span class="text-[11px] font-mono text-gray-400">
-              Type: <strong class="text-gray-300">{{ evidence.type || 'Digital' }}</strong>
-            </span>
-          </div>
-          <h3 class="text-base font-bold text-white leading-snug">{{ evidence.title }}</h3>
-          <div class="text-xs text-gray-400">
-            Source: <strong class="text-gray-300">{{ evidence.source || 'Direct Field Ingestion' }}</strong>
-          </div>
+        <div class="flex items-center space-x-2 font-mono text-[10px]">
+          <span class="px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-700/80 font-semibold">
+            {{ evidence._id }}
+          </span>
+          <span class="text-slate-400">
+            {{ evidence.type || 'Digital' }}
+          </span>
         </div>
 
-        <span :class="verificationBadgeClass(evidence.verificationState)" class="text-xs px-2.5 py-1 rounded font-mono font-bold uppercase tracking-wider whitespace-nowrap shadow-sm">
+        <span :class="verificationBadgeClass(evidence.verificationState)" class="text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider whitespace-nowrap shadow-sm">
           {{ evidence.verificationState || 'UNVERIFIED' }}
         </span>
       </div>
 
-      <!-- Description narrative -->
-      <p v-if="evidence.description" class="text-xs text-gray-300 bg-gray-900/60 p-2.5 rounded-lg border border-gray-700/60 line-clamp-2">
-        {{ evidence.description }}
-      </p>
+      <!-- Title & Source -->
+      <div>
+        <h3 class="text-sm font-bold text-white leading-snug group-hover:text-blue-300 transition line-clamp-2">
+          {{ evidence.title }}
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+          Source: <span class="text-slate-300">{{ evidence.source || 'Direct Telemetry' }}</span>
+        </p>
+      </div>
 
-      <!-- Reliability & Relational Metrics -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-gray-900/70 p-2.5 rounded-lg border border-gray-700/50 font-mono">
+      <!-- Compact Metrics Row -->
+      <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1 border-t border-slate-800/80">
         <div>
-          <span class="text-[10px] text-gray-400 uppercase block">Confidence:</span>
-          <span class="font-bold text-white">{{ evidence.confidenceScore !== undefined ? evidence.confidenceScore : 50 }}%</span>
+          <span>Confidence: </span>
+          <strong class="text-white">{{ evidence.confidenceScore !== undefined ? evidence.confidenceScore : 50 }}%</strong>
         </div>
-        <div>
-          <span class="text-[10px] text-gray-400 uppercase block">Relationships:</span>
-          <span class="font-bold text-indigo-300">{{ relationshipCount }} Links</span>
-        </div>
-        <div class="col-span-2 sm:col-span-1 flex items-center space-x-2">
-          <span class="text-emerald-400 font-bold text-[11px]">+{{ supportCount }} Sup</span>
-          <span class="text-gray-500">•</span>
-          <span class="text-rose-400 font-bold text-[11px]">-{{ contradictCount }} Con</span>
+        <div class="flex items-center space-x-2">
+          <span class="text-emerald-400 font-bold">+{{ supportCount }} Sup</span>
+          <span class="text-slate-600">•</span>
+          <span class="text-rose-400 font-bold">-{{ contradictCount }} Con</span>
         </div>
       </div>
 
-      <!-- Analytical Impact on Linked Hypotheses -->
-      <div class="space-y-1.5 pt-1">
-        <div class="flex items-center justify-between text-[10px] uppercase font-bold text-gray-400">
-          <span>Analytical Impact</span>
-          <span class="font-mono text-gray-500">Score Contribution</span>
-        </div>
-
-        <div v-if="impactList.length === 0" class="text-[11px] text-gray-500 italic bg-gray-900/40 px-2.5 py-1.5 rounded border border-gray-800">
-          Not linked to any competing hypotheses yet.
-        </div>
-
-        <div v-else class="space-y-1">
-          <div 
-            v-for="item in impactList" 
-            :key="item.relationshipId"
-            class="flex items-center justify-between text-xs px-2.5 py-1 rounded bg-gray-900/90 border border-gray-800 font-mono"
-          >
-            <span class="text-gray-300 truncate max-w-[200px]" :title="item.hypothesisTitle">
-              {{ item.hypothesisTitle }}
-            </span>
-            <span 
-              class="font-bold text-xs"
-              :class="item.value > 0 ? 'text-emerald-400' : item.value < 0 ? 'text-rose-400' : 'text-gray-400'"
-            >
-              {{ item.formattedImpact }}
-            </span>
-          </div>
-        </div>
+      <!-- Primary Impact Summary -->
+      <div v-if="impactList.length > 0" class="text-[11px] font-mono text-slate-300 flex items-center justify-between pt-0.5">
+        <span class="text-slate-500 text-[10px] uppercase">Primary Impact:</span>
+        <span 
+          class="font-bold truncate max-w-[170px]"
+          :class="impactList[0].value > 0 ? 'text-emerald-400' : impactList[0].value < 0 ? 'text-rose-400' : 'text-slate-400'"
+          :title="`${impactList[0].hypothesisTitle} (${impactList[0].formattedImpact})`"
+        >
+          {{ impactList[0].formattedImpact }} to {{ impactList[0].hypothesisTitle }}
+        </span>
       </div>
     </div>
 
     <!-- Actions Toolbar -->
-    <div class="border-t border-gray-700/80 pt-3 space-y-2 mt-3">
+    <div class="border-t border-slate-800/80 pt-2.5 space-y-2 mt-2">
       <div class="flex items-center justify-between">
         <button 
           @click="$emit('view-details', evidence)" 
-          class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center space-x-1"
+          class="text-xs text-blue-400 hover:text-blue-300 font-semibold font-mono flex items-center space-x-1"
         >
-          <span>🔍 View Details</span>
+          <span>Inspect Details ➔</span>
         </button>
         <button 
           v-if="hasHypotheses"
           @click="$emit('link-theory', evidence._id)" 
-          class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+          class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold font-mono"
         >
-          + Link to Theory
+          + Link Theory
         </button>
       </div>
 
-      <!-- Verification Buttons -->
-      <div class="grid grid-cols-3 gap-1.5 pt-1">
+      <!-- Verification Quick Action Buttons -->
+      <div class="grid grid-cols-3 gap-1.5 pt-0.5">
         <button 
           @click="$emit('verify', { id: evidence._id, state: 'VERIFIED' })" 
           :disabled="isVerifying"
           :class="[
-            evidence.verificationState === 'VERIFIED' ? 'bg-emerald-600 text-white font-bold' : 'bg-gray-700/80 text-gray-300 hover:bg-emerald-700 hover:text-white',
-            'text-xs py-1.5 rounded transition disabled:opacity-50 text-center font-medium'
+            evidence.verificationState === 'VERIFIED' ? 'bg-emerald-700 text-white font-bold' : 'bg-slate-900 text-slate-300 hover:bg-emerald-800 hover:text-white border border-slate-800',
+            'text-[11px] py-1 rounded transition disabled:opacity-50 text-center font-mono'
           ]"
         >
           ✓ Verify
@@ -110,8 +87,8 @@
           @click="$emit('verify', { id: evidence._id, state: 'DISPUTED' })" 
           :disabled="isVerifying"
           :class="[
-            evidence.verificationState === 'DISPUTED' ? 'bg-amber-600 text-white font-bold' : 'bg-gray-700/80 text-gray-300 hover:bg-amber-700 hover:text-white',
-            'text-xs py-1.5 rounded transition disabled:opacity-50 text-center font-medium'
+            evidence.verificationState === 'DISPUTED' ? 'bg-amber-700 text-white font-bold' : 'bg-slate-900 text-slate-300 hover:bg-amber-800 hover:text-white border border-slate-800',
+            'text-[11px] py-1 rounded transition disabled:opacity-50 text-center font-mono'
           ]"
         >
           ⚠ Dispute
@@ -120,8 +97,8 @@
           @click="$emit('verify', { id: evidence._id, state: 'REJECTED' })" 
           :disabled="isVerifying"
           :class="[
-            evidence.verificationState === 'REJECTED' ? 'bg-rose-600 text-white font-bold' : 'bg-gray-700/80 text-gray-300 hover:bg-rose-700 hover:text-white',
-            'text-xs py-1.5 rounded transition disabled:opacity-50 text-center font-medium'
+            evidence.verificationState === 'REJECTED' ? 'bg-rose-700 text-white font-bold' : 'bg-slate-900 text-slate-300 hover:bg-rose-800 hover:text-white border border-slate-800',
+            'text-[11px] py-1 rounded transition disabled:opacity-50 text-center font-mono'
           ]"
         >
           ✕ Reject
