@@ -159,8 +159,40 @@
       </button>
     </div>
 
+    <!-- ==================== ARCHIVED DOSSIER BANNER ==================== -->
+    <div 
+      v-else-if="caseItem.status === 'ARCHIVED'" 
+      class="bg-[#0D1322] border-2 border-slate-700/80 rounded-xl p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono"
+    >
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-400 text-xl font-bold">
+          📦
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-600">
+              CASE ARCHIVED (READ-ONLY)
+            </span>
+            <span class="text-xs text-slate-400">Historical Dossier Record</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">
+            This case is archived. All evidence artifacts, competing hypotheses, relationship networks, timeline streams, and immutable audit logs remain preserved for inspection.
+          </p>
+        </div>
+      </div>
+      <button 
+        @click="handleResumeInvestigation"
+        class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition"
+      >
+        Reopen Case
+      </button>
+    </div>
+
     <!-- ==================== 6. QUICK ACTIONS TOOLBAR ==================== -->
-    <div class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+    <div 
+      v-if="caseItem.status !== 'ARCHIVED' && caseItem.status !== 'RESOLVED'"
+      class="bg-[#0B0F19] border border-slate-800/90 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm"
+    >
       <div class="flex items-center space-x-2">
         <span class="text-[10px] font-bold uppercase font-mono tracking-wider text-slate-400 px-1">Actions:</span>
         <div class="flex flex-wrap gap-2">
@@ -195,7 +227,7 @@
       <!-- Advance Lifecycle Shortcut Button -->
       <button 
         @click="advanceCaseLifecycle" 
-        :disabled="statusUpdating || caseItem.status === 'RESOLVED' || caseItem.status === 'ARCHIVED'"
+        :disabled="statusUpdating"
         class="bg-[#0D1322] hover:bg-slate-800 text-slate-200 border border-slate-700 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide transition flex items-center space-x-1.5 disabled:opacity-40 font-mono"
       >
         <span>Advance Stage ➔</span>

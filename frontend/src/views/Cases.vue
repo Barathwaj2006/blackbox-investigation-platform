@@ -40,6 +40,16 @@
 
       <!-- Filters -->
       <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+        <!-- Quick Review Queue Shortcut -->
+        <button 
+          @click="statusFilter = statusFilter === 'REVIEW' ? '' : 'REVIEW'; fetchCases(1)"
+          :class="statusFilter === 'REVIEW' ? 'bg-purple-600 text-white font-bold' : 'bg-purple-950/60 text-purple-300 hover:bg-purple-900 border border-purple-800/60'"
+          class="text-xs px-2.5 py-1.5 rounded-lg font-mono transition flex items-center space-x-1"
+          title="Filter to cases awaiting Reviewer evaluation"
+        >
+          <span>⚡ Review Queue</span>
+        </button>
+
         <!-- Status Filter -->
         <div class="flex items-center space-x-1.5">
           <label class="text-[10px] text-slate-400 uppercase font-mono font-bold">Status:</label>
