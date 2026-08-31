@@ -1,12 +1,15 @@
 {
   "name": "blackbox-investigation-platform",
   "version": "1.0.0",
+  "description": "Digital Evidence Investigation Platform for case tracking, evidence logging, hypothesis scoring, and audit trails",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "node backend/server.js",
     "build": "npm --prefix frontend run build",
     "build:frontend": "npm --prefix frontend run build",
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "test": "node backend/test/smoke-test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

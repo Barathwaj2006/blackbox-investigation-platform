@@ -15,4 +15,12 @@ router.route('/:id/relationships')
   .get(hypothesisController.getRelationships)
   .post(authorize('Investigator', 'Admin'), hypothesisController.addRelationship);
 
+// /api/hypotheses/relationships/:id
+router.route('/relationships/:id')
+  .delete(authorize('Investigator', 'Admin'), hypothesisController.deleteRelationship);
+
+// /api/hypotheses/:id/score-history
+router.route('/:id/score-history')
+  .get(hypothesisController.getScoreHistoryForHypothesis);
+
 module.exports = router;

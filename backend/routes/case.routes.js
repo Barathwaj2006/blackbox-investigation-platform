@@ -19,4 +19,10 @@ router.route('/:id/status')
 router.route('/:caseId/relationships')
   .get(hypothesisController.getRelationshipsForCase);
 
+router.route('/:caseId/score-history')
+  .get(hypothesisController.getScoreHistoryForCase);
+
+router.route('/:caseId/intelligence-summary')
+  .get(hypothesisController.getIntelligenceSummary);
+
 module.exports = router;

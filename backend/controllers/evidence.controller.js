@@ -133,17 +133,37 @@ exports.addEvidence = async (req, res, next) => {
 exports.verifyEvidence = async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      const ev = memoryStore.evidence.find(e => e._id === req.params.id);
+      const ev = memoryStore.evidence.find(e => String(e._id) === String(req.params.id));
       if (!ev) return res.status(404).json({ success: false, error: 'Evidence not found' });
-      const oldState = ev.verificationState;
+      const oldState = ev.verificationState || 'UNVERIFIED';
       ev.verificationState = req.body.verificationState;
       if (req.body.confidenceScore !== undefined) {
         ev.confidenceScore = req.body.confidenceScore;
       }
-      const affectedRels = memoryStore.relationships.filter(r => r.evidenceId === ev._id);
-      for (const rel of affectedRels) {
-        recalculateScoreInMemory(rel.hypothesisId);
+      const affectedRels = memoryStore.relationships.filter(r => String(r.evidenceId) === String(ev._id));
+      const affectedHypothesisIds = [...new Set(affectedRels.map(r => String(r.hypothesisId)))];
+      
+      const triggerType = ev.verificationState === 'DISPUTED' ? 'DISPUTE_EVIDENCE' 
+        : ev.verificationState === 'REJECTED' ? 'REJECT_EVIDENCE' 
+        : 'VERIFY_EVIDENCE';
+
+      const triggerInfo = {
+        triggerType,
+        triggerEntityId: ev._id,
+        triggerDetails: {
+          evidenceId: ev._id,
+          evidenceTitle: ev.title,
+          verificationState: ev.verificationState,
+          oldState,
+          description: `Evidence verification updated from ${oldState} to ${ev.verificationState}`
+        },
+        forceRecord: true
+      };
+
+      for (const hypId of affectedHypothesisIds) {
+        recalculateScoreInMemory(hypId, triggerInfo, req.user);
       }
+      
       await logAudit(req.user?._id || 'u_reviewer', 'VERIFY_EVIDENCE', 'Evidence', ev._id, { 
         oldState, 
         newState: ev.verificationState,
@@ -155,7 +175,7 @@ exports.verifyEvidence = async (req, res, next) => {
     const evidence = await Evidence.findById(req.params.id);
     if (!evidence) return res.status(404).json({ success: false, error: 'Evidence not found' });
 
-    const oldState = evidence.verificationState;
+    const oldState = evidence.verificationState || 'UNVERIFIED';
     evidence.verificationState = req.body.verificationState;
     if (req.body.confidenceScore !== undefined) {
       evidence.confidenceScore = req.body.confidenceScore;
@@ -169,8 +189,25 @@ exports.verifyEvidence = async (req, res, next) => {
       title: evidence.title
     });
     
+    const triggerType = evidence.verificationState === 'DISPUTED' ? 'DISPUTE_EVIDENCE' 
+      : evidence.verificationState === 'REJECTED' ? 'REJECT_EVIDENCE' 
+      : 'VERIFY_EVIDENCE';
+
+    const triggerInfo = {
+      triggerType,
+      triggerEntityId: evidence._id,
+      triggerDetails: {
+        evidenceId: evidence._id,
+        evidenceTitle: evidence.title,
+        verificationState: evidence.verificationState,
+        oldState,
+        description: `Evidence verification updated from ${oldState} to ${evidence.verificationState}`
+      },
+      forceRecord: true
+    };
+
     // Update hypothesis scores affected by this evidence
-    await updateScoresForEvidence(evidence._id);
+    await updateScoresForEvidence(evidence._id, triggerInfo, req.user);
     
     res.json({ success: true, data: evidence });
   } catch (err) {
