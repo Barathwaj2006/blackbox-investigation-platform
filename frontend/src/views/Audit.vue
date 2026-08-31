@@ -44,7 +44,7 @@ const loading = ref(true);
 
 const fetchLogs = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/audit', {
+    const res = await fetch('/api/audit', {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     });
     const data = await res.json();

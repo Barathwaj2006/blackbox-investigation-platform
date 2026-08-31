@@ -105,7 +105,7 @@ const resetDemo = async () => {
   if(!confirm('This will wipe the database and restore the BK-2041 Demo Case. Proceed?')) return;
   resetting.value = true;
   try {
-    const res = await fetch('http://localhost:5000/api/admin/reset-demo', {
+    const res = await fetch('/api/admin/reset-demo', {
        method: 'POST',
        headers: { 'Authorization': `Bearer ${authStore.token}` }
     });
@@ -120,7 +120,7 @@ const resetDemo = async () => {
 const fetchDashboardData = async () => {
   loading.value = true;
   try {
-    const res = await fetch('http://localhost:5000/api/cases', {
+    const res = await fetch('/api/cases', {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     });
     const data = await res.json();

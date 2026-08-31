@@ -24,38 +24,25 @@ JWT_SECRET=your_secure_random_string_here
 PORT=8080
 ```
 
-### 3. Build the Frontend
-Compile the Vue application into static assets.
+### 3. Build the Application
+The repository uses a root `package.json` to orchestrate builds automatically:
 ```bash
-cd frontend
+npm install
 npm run build
 ```
-This outputs to `frontend/dist/`.
 
-### 4. Configure Express to Serve Static Files
-In your backend `server.js` (or a dedicated production entry point), add:
-
-```javascript
-const path = require('path');
-
-// ... after API routes ...
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-  
-  // SPA fallback for Vue Router
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-  });
-}
-```
-
-### 5. Start the Server
+### 4. Start the Server
 ```bash
-cd backend
 npm start
 ```
 
-## Recommended Platforms
+## Recommended Platform: Render
 
-- **Render**: Connect the GitHub repository, set root directory to `backend`, add a custom Build Command (`cd ../frontend && npm install && npm run build && cd ../backend && npm install`), and set Start Command to `npm start`.
+BlackBox is pre-configured for a single-service Web Service deployment on Render:
+
+1. Connect your GitHub repository.
+2. Ensure environment is set to `Node`.
+3. Build Command: `npm install && npm run build`
+4. Start Command: `npm start`
+5. Add your Environment Variables (`MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`).
 - **Google Cloud Run**: Containerize using a standard Node.js Dockerfile that builds the frontend and copies `dist/` before starting Express.
