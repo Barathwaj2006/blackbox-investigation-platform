@@ -21,7 +21,7 @@ app.use(express.json());
 
 // Database connection middleware for serverless and local requests
 app.use(async (req, res, next) => {
-  if (req.path === '/api/health' || req.path === '/health') {
+  if (req.path === '/api/health' || req.path === '/health' || req.path === '/api/diagnostic' || req.path === '/diagnostic') {
     return next();
   }
   try {
@@ -33,9 +33,15 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Health check endpoint
-app.get(['/api/health', '/health'], (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check and diagnostic endpoint (non-secret booleans only)
+app.get(['/api/health', '/health', '/api/diagnostic', '/diagnostic'], (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
+    mongodbConfigured: !!process.env.MONGODB_URI,
+    jwtConfigured: !!process.env.JWT_SECRET,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Admin reset demo

@@ -1,1 +1,1 @@
-module.exports = (req, res) => { res.status(200).json({ status: "ok", timestamp: new Date().toISOString() }); };
+module.exports = (req, res) => { const data = { status: "ok", environment: process.env.NODE_ENV || "development", mongodbConfigured: !!process.env.MONGODB_URI, jwtConfigured: !!process.env.JWT_SECRET, timestamp: new Date().toISOString() }; if (res.status && res.json) { return res.status(200).json(data); } res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(data)); };
