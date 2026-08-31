@@ -1,109 +1,456 @@
 <template>
-  <div v-if="loading" class="text-gray-400 py-16 text-center flex flex-col items-center justify-center space-y-3">
-    <svg class="animate-spin h-7 w-7 text-blue-500" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-    </svg>
-    <span class="text-sm">Loading case workspace & intelligence dossiers...</span>
+  <div v-if="loading" class="text-gray-400 py-20 text-center flex flex-col items-center justify-center space-y-4">
+    <div class="relative w-12 h-12">
+      <div class="w-12 h-12 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+      <div class="absolute inset-0 flex items-center justify-center text-xs font-mono text-blue-400">BB</div>
+    </div>
+    <div class="space-y-1">
+      <div class="text-sm font-semibold text-gray-200">Loading Case Intelligence Dossier...</div>
+      <div class="text-xs text-gray-500 font-mono">Synchronizing evidence graphs, hypotheses, and audit telemetry</div>
+    </div>
   </div>
 
-  <div v-else-if="caseItem" class="space-y-6">
-    <!-- Status / Notification Banner -->
-    <div v-if="actionMessage" :class="[actionMessage.type === 'error' ? 'bg-rose-950/80 border-rose-700 text-rose-200' : 'bg-emerald-950/80 border-emerald-700 text-emerald-200', 'p-3 rounded-lg border flex justify-between items-center text-sm transition shadow-lg']">
-      <span class="font-medium">{{ actionMessage.text }}</span>
-      <button @click="actionMessage = null" class="text-xs opacity-75 hover:opacity-100 font-bold ml-4">✕</button>
+  <div v-else-if="caseItem" class="space-y-6 max-w-7xl mx-auto pb-12">
+    <!-- Status / Action Notification Banner -->
+    <div 
+      v-if="actionMessage" 
+      :class="[
+        actionMessage.type === 'error' ? 'bg-rose-950/90 border-rose-700 text-rose-200' : 'bg-emerald-950/90 border-emerald-700 text-emerald-200',
+        'p-3.5 rounded-lg border flex justify-between items-center text-sm shadow-xl transition animate-fadeIn'
+      ]"
+    >
+      <div class="flex items-center space-x-2.5">
+        <span v-if="actionMessage.type === 'error'" class="text-rose-400 font-bold">✕</span>
+        <span v-else class="text-emerald-400 font-bold">✓</span>
+        <span class="font-medium">{{ actionMessage.text }}</span>
+      </div>
+      <button @click="actionMessage = null" class="text-xs opacity-75 hover:opacity-100 font-bold px-2 py-1">Dismiss</button>
     </div>
 
-    <!-- Case Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-800/90 p-5 rounded-lg border border-gray-700 shadow-lg">
-      <div>
-        <div class="flex items-center space-x-3">
-          <h1 class="text-2xl font-bold text-white tracking-wide">{{ caseItem.title }}</h1>
-          <span :class="statusBadgeClass(caseItem.status)" class="text-xs px-2.5 py-0.5 rounded-full font-semibold">
-            {{ caseItem.status }}
-          </span>
+    <!-- ==================== 1. CASE HEADER ==================== -->
+    <div class="bg-gray-800/95 border border-gray-700 rounded-xl p-6 shadow-xl relative overflow-hidden">
+      <!-- Ambient decorative glow -->
+      <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
+        <div class="space-y-2 flex-1">
+          <!-- Top metadata row -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span class="font-mono text-xs px-2.5 py-0.5 rounded bg-gray-900 text-blue-400 border border-gray-700 font-semibold tracking-wider">
+              ID: {{ caseItem._id }}
+            </span>
+            <span :class="priorityBadgeClass(computedPriority)" class="text-xs px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
+              {{ computedPriority }} PRIORITY
+            </span>
+            <span :class="statusBadgeClass(caseItem.status)" class="text-xs px-3 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+              {{ caseItem.status }}
+            </span>
+            <span class="text-xs text-gray-400 font-mono flex items-center space-x-1">
+              <span>👤 Investigator:</span>
+              <strong class="text-gray-200">{{ investigatorName }}</strong>
+            </span>
+          </div>
+
+          <!-- Case Title -->
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+            {{ caseItem.title }}
+          </h1>
+
+          <!-- Case Scope / Description -->
+          <p class="text-gray-300 text-sm max-w-4xl leading-relaxed">
+            {{ caseItem.description || 'No detailed scope summary specified for this case dossier.' }}
+          </p>
+
+          <!-- Timeline metadata -->
+          <div class="flex flex-wrap items-center gap-4 text-xs text-gray-400 pt-1 font-mono">
+            <span>Opened: <strong class="text-gray-300">{{ formatDateTime(caseItem.createdAt) }}</strong></span>
+            <span v-if="caseItem.updatedAt && caseItem.updatedAt !== caseItem.createdAt">
+              Last Mutation: <strong class="text-gray-300">{{ formatDateTime(caseItem.updatedAt) }}</strong>
+            </span>
+          </div>
         </div>
-        <p class="text-gray-400 mt-1 text-sm max-w-3xl leading-relaxed">{{ caseItem.description || 'No detailed scope provided.' }}</p>
-      </div>
 
-      <div class="flex items-center space-x-3 self-end md:self-auto">
-        <label class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Lifecycle Status:</label>
-        <select 
-          v-model="caseItem.status" 
-          @change="updateStatus" 
-          :disabled="statusUpdating"
-          class="bg-gray-700 text-white border border-gray-600 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 font-medium"
-        >
-          <option value="DRAFT">DRAFT</option>
-          <option value="OPEN">OPEN</option>
-          <option value="INVESTIGATING">INVESTIGATING</option>
-          <option value="REVIEW">REVIEW</option>
-          <option value="RESOLVED">RESOLVED</option>
-          <option value="ARCHIVED">ARCHIVED</option>
-        </select>
+        <!-- Lifecycle Control & Case Attention Indicator -->
+        <div class="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 w-full lg:w-auto self-stretch lg:self-auto border-t lg:border-t-0 border-gray-700/80 pt-4 lg:pt-0">
+          <div class="bg-gray-900/90 border border-gray-700 p-3 rounded-lg flex items-center justify-between sm:justify-start space-x-3 w-full lg:w-auto shadow-inner">
+            <label class="text-xs text-gray-400 uppercase font-semibold tracking-wider whitespace-nowrap">Case Status:</label>
+            <select 
+              v-model="caseItem.status" 
+              @change="updateStatus" 
+              :disabled="statusUpdating"
+              class="bg-gray-800 text-white border border-gray-600 rounded px-3 py-1 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <option value="DRAFT">DRAFT</option>
+              <option value="OPEN">OPEN</option>
+              <option value="INVESTIGATING">INVESTIGATING</option>
+              <option value="REVIEW">REVIEW</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+            </select>
+          </div>
+
+          <!-- Prominent Health / Attention Status Badge -->
+          <div :class="caseHealthBoxClass" class="w-full lg:w-auto px-3.5 py-2 rounded-lg border text-xs flex items-center justify-between space-x-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full animate-pulse" :class="caseHealthDotClass"></span>
+              <span class="font-bold">{{ caseHealthText }}</span>
+            </div>
+            <span class="text-[11px] font-mono opacity-80">{{ attentionItems.length }} alerts</span>
+          </div>
+        </div>
       </div>
     </div>
-    
-    <!-- Navigation Tabs -->
+
+    <!-- ==================== 6. QUICK ACTIONS TOOLBAR ==================== -->
+    <div class="bg-gray-900/90 border border-gray-700/80 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+      <div class="flex items-center space-x-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-gray-400 px-1">Actions:</span>
+        <div class="flex flex-wrap gap-2">
+          <button 
+            @click="openAddEvidenceModal" 
+            class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow"
+          >
+            <span>+ Add Evidence</span>
+          </button>
+          <button 
+            @click="openCreateHypothesisModal" 
+            class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow"
+          >
+            <span>+ Create Hypothesis</span>
+          </button>
+          <button 
+            v-if="hypotheses.length > 0 && evidence.length > 0"
+            @click="openLinkEvidenceModal(null)" 
+            class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow"
+          >
+            <span>🔗 Link Evidence</span>
+          </button>
+          <button 
+            @click="quickReviewPendingEvidence" 
+            class="bg-amber-600/80 hover:bg-amber-600 text-amber-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 border border-amber-500/30"
+          >
+            <span>⚡ Review Evidence ({{ unverifiedEvidenceCount }})</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Advance Lifecycle Shortcut Button -->
+      <button 
+        @click="advanceCaseLifecycle" 
+        :disabled="statusUpdating || caseItem.status === 'RESOLVED' || caseItem.status === 'ARCHIVED'"
+        class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 disabled:opacity-40"
+      >
+        <span>Advance Stage ➔</span>
+      </button>
+    </div>
+
+    <!-- ==================== 8. CASE NAVIGATION TABS ==================== -->
     <div class="border-b border-gray-700">
-      <nav class="-mb-px flex space-x-6 overflow-x-auto">
+      <nav class="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
+        <button 
+          @click="tab = 'overview'" 
+          :class="[tab === 'overview' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+        >
+          <span>Investigation Overview</span>
+          <span v-if="attentionItems.length > 0" class="bg-amber-900/80 text-amber-300 border border-amber-700 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+            {{ attentionItems.length }}
+          </span>
+        </button>
         <button 
           @click="tab = 'evidence'" 
           :class="[tab === 'evidence' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
         >
           <span>Evidence Collection</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full">{{ evidence.length }}</span>
+          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ evidence.length }}</span>
         </button>
         <button 
           @click="tab = 'hypotheses'" 
           :class="[tab === 'hypotheses' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
         >
           <span>Competing Hypotheses</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full">{{ hypotheses.length }}</span>
+          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ hypotheses.length }}</span>
         </button>
         <button 
           @click="tab = 'map'" 
           :class="[tab === 'map' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
         >
-          <span>Evidence Map (Graph)</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full">{{ caseRelationships.length }}</span>
+          <span>Interactive Evidence Map</span>
+          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ caseRelationships.length }}</span>
         </button>
         <button 
           @click="tab = 'timeline'" 
           :class="[tab === 'timeline' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
         >
-          <span>Investigation Timeline</span>
-          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full">{{ timelineLogs.length }}</span>
+          <span>Timeline Stream</span>
+          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ timelineLogs.length }}</span>
+        </button>
+        <button 
+          @click="tab = 'audit'" 
+          :class="[tab === 'audit' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500', 'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors']"
+        >
+          <span>Case Audit Log</span>
+          <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-mono">{{ caseAuditLogs.length }}</span>
         </button>
       </nav>
     </div>
 
-    <!-- ==================== TAB 1: EVIDENCE ==================== -->
+    <!-- ==================== TAB 0: INVESTIGATION OVERVIEW ==================== -->
+    <div v-if="tab === 'overview'" class="space-y-6">
+      <!-- 2. INVESTIGATION METRICS CARDS -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <!-- Total Evidence -->
+        <div class="bg-gray-800/90 border border-gray-700 p-4 rounded-xl shadow flex flex-col justify-between">
+          <span class="text-xs uppercase font-semibold text-gray-400">Total Evidence</span>
+          <div class="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-2">{{ evidence.length }}</div>
+          <span class="text-[11px] text-gray-400 mt-1">Cataloged items</span>
+        </div>
+
+        <!-- Verified Evidence -->
+        <div class="bg-gray-800/90 border border-emerald-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
+          <span class="text-xs uppercase font-semibold text-emerald-400">Verified Evidence</span>
+          <div class="text-2xl sm:text-3xl font-extrabold text-emerald-300 font-mono mt-2">{{ verifiedEvidenceCount }}</div>
+          <span class="text-[11px] text-emerald-400/80 mt-1">1.0 weight multiplier</span>
+        </div>
+
+        <!-- Pending Verification -->
+        <div class="bg-gray-800/90 border border-amber-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
+          <span class="text-xs uppercase font-semibold text-amber-400">Pending Review</span>
+          <div class="text-2xl sm:text-3xl font-extrabold text-amber-300 font-mono mt-2">{{ unverifiedEvidenceCount }}</div>
+          <span class="text-[11px] text-amber-400/80 mt-1">0.5 weight multiplier</span>
+        </div>
+
+        <!-- Disputed / Rejected -->
+        <div class="bg-gray-800/90 border border-rose-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
+          <span class="text-xs uppercase font-semibold text-rose-400">Disputed / Rejected</span>
+          <div class="text-2xl sm:text-3xl font-extrabold text-rose-300 font-mono mt-2">{{ disputedOrRejectedCount }}</div>
+          <span class="text-[11px] text-rose-400/80 mt-1">0.0 - 0.2 multiplier</span>
+        </div>
+
+        <!-- Hypotheses Count -->
+        <div class="bg-gray-800/90 border border-purple-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
+          <span class="text-xs uppercase font-semibold text-purple-400">Hypotheses</span>
+          <div class="text-2xl sm:text-3xl font-extrabold text-purple-300 font-mono mt-2">{{ hypotheses.length }}</div>
+          <span class="text-[11px] text-purple-400/80 mt-1">Competing theories</span>
+        </div>
+
+        <!-- Leading Hypothesis Score -->
+        <div class="bg-gray-800/90 border border-blue-800/40 p-4 rounded-xl shadow flex flex-col justify-between">
+          <span class="text-xs uppercase font-semibold text-blue-400">Leading Score</span>
+          <div class="text-2xl sm:text-3xl font-extrabold text-blue-300 font-mono mt-2">
+            {{ leadingHypothesis ? leadingHypothesis.score?.toFixed(2) : '0.00' }}
+          </div>
+          <span class="text-[11px] text-blue-400/80 mt-1 truncate" :title="leadingHypothesis?.title || 'None'">
+            {{ leadingHypothesis ? leadingHypothesis.title : 'None active' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Overview Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 7. INVESTIGATION ATTENTION / NEEDS ATTENTION AREA -->
+        <div class="lg:col-span-1 space-y-4">
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-700 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-amber-400 text-lg">⚠️</span>
+                <h3 class="text-base font-bold text-white">Investigation Attention</h3>
+              </div>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 text-gray-300 border border-gray-700">
+                {{ attentionItems.length }} Items
+              </span>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="attentionItems.length === 0" class="text-center py-8 px-4 bg-gray-900/60 rounded-lg border border-gray-700/60">
+              <span class="text-emerald-400 text-2xl block mb-2">✓</span>
+              <p class="text-xs font-semibold text-gray-300">All Case Items Operational</p>
+              <p class="text-[11px] text-gray-500 mt-1">All collected evidence is verified, hypotheses are linked, and no conflicts are unresolved.</p>
+            </div>
+
+            <!-- Attention Items List -->
+            <div v-else class="space-y-3">
+              <div 
+                v-for="(item, idx) in attentionItems" 
+                :key="idx"
+                class="p-3 rounded-lg border text-xs transition space-y-1.5"
+                :class="item.severity === 'high' ? 'bg-rose-950/40 border-rose-800 text-rose-200' : 'bg-amber-950/40 border-amber-800 text-amber-200'"
+              >
+                <div class="flex items-center justify-between font-bold">
+                  <span>{{ item.title }}</span>
+                  <span class="uppercase text-[10px] font-mono px-1.5 py-0.5 rounded" :class="item.severity === 'high' ? 'bg-rose-900 text-rose-200' : 'bg-amber-900 text-amber-200'">
+                    {{ item.type }}
+                  </span>
+                </div>
+                <p class="text-[11px] opacity-90 leading-relaxed">{{ item.description }}</p>
+                <div class="pt-1 flex justify-end">
+                  <button 
+                    @click="handleAttentionAction(item)"
+                    class="text-[10px] font-semibold underline hover:opacity-100 opacity-80"
+                  >
+                    {{ item.actionLabel }} ➔
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Case Health Card -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Intelligence Consensus Health</h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center text-gray-300">
+                <span>Evidence Verification Ratio:</span>
+                <span class="font-mono font-bold text-white">{{ verificationRatio }}%</span>
+              </div>
+              <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full transition-all duration-500" :style="{ width: verificationRatio + '%' }"></div>
+              </div>
+
+              <div class="flex justify-between items-center text-gray-300 pt-2">
+                <span>Leading Theory Confidence:</span>
+                <span class="font-mono font-bold text-white">
+                  {{ leadingHypothesis ? Math.min(100, Math.max(0, Math.round(leadingHypothesis.score * 10))) : 0 }}%
+                </span>
+              </div>
+              <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden">
+                <div 
+                  class="bg-blue-500 h-full transition-all duration-500" 
+                  :style="{ width: (leadingHypothesis ? Math.min(100, Math.max(0, Math.round(leadingHypothesis.score * 10))) : 0) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leading Hypothesis & Top Evidence Dossier -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Leading Hypothesis Card -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow">
+            <div class="flex items-center justify-between mb-3 border-b border-gray-700 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-purple-400 font-bold text-lg">💡</span>
+                <h3 class="text-base font-bold text-white">Ranked Leading Hypothesis</h3>
+              </div>
+              <button @click="tab = 'hypotheses'" class="text-xs text-blue-400 hover:underline font-medium">
+                View All Hypotheses ({{ hypotheses.length }}) ➔
+              </button>
+            </div>
+
+            <div v-if="!leadingHypothesis" class="text-center py-8 text-xs text-gray-400">
+              No hypotheses formulated. Click "+ Create Hypothesis" to begin comparative analysis.
+            </div>
+
+            <div v-else class="space-y-4">
+              <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-gray-900/80 p-4 rounded-xl border border-gray-700">
+                <div class="space-y-1">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-mono font-bold">
+                      #1 RANKED
+                    </span>
+                    <h4 class="text-base font-bold text-white">{{ leadingHypothesis.title }}</h4>
+                  </div>
+                  <p class="text-xs text-gray-300 leading-relaxed">{{ leadingHypothesis.description || 'No theory summary.' }}</p>
+                </div>
+                <div class="text-right sm:self-center">
+                  <div class="text-[10px] uppercase font-bold text-gray-400">Calculated Score</div>
+                  <div class="text-2xl font-black font-mono" :class="leadingHypothesis.score > 0 ? 'text-emerald-400' : 'text-rose-400'">
+                    {{ (leadingHypothesis.score || 0).toFixed(2) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Explainability Snippet -->
+              <div class="bg-gray-900/50 p-3.5 rounded-lg border border-gray-700/60 text-xs">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="font-semibold text-gray-300 uppercase tracking-wider">Top Mathematical Factor:</span>
+                  <button @click="openExplainabilityModal(leadingHypothesis)" class="text-xs text-indigo-400 hover:underline font-mono">
+                    Why this score? ➔
+                  </button>
+                </div>
+                <div v-if="leadingHypothesis.explainability && leadingHypothesis.explainability.length > 0" class="font-mono text-emerald-300 text-xs bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
+                  {{ leadingHypothesis.explainability[0] }}
+                </div>
+                <div v-else class="text-xs text-gray-500 italic">No linked evidence relationships yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Evidence Ingested -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow">
+            <div class="flex items-center justify-between mb-3 border-b border-gray-700 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-blue-400 font-bold text-lg">📁</span>
+                <h3 class="text-base font-bold text-white">Recent Case Evidence</h3>
+              </div>
+              <button @click="tab = 'evidence'" class="text-xs text-blue-400 hover:underline font-medium">
+                Open Full Evidence Catalog ({{ evidence.length }}) ➔
+              </button>
+            </div>
+
+            <div v-if="evidence.length === 0" class="text-center py-8 text-xs text-gray-400">
+              No evidence ingested yet.
+            </div>
+
+            <div v-else class="space-y-2.5">
+              <div 
+                v-for="ev in evidence.slice(0, 4)" 
+                :key="ev._id"
+                class="bg-gray-900/70 border border-gray-700/80 p-3 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-2 hover:border-gray-600 transition"
+              >
+                <div class="space-y-0.5">
+                  <div class="flex items-center space-x-2">
+                    <span class="font-semibold text-white text-xs">{{ ev.title }}</span>
+                    <span class="text-[10px] font-mono text-gray-400">({{ ev.type || 'Digital' }})</span>
+                  </div>
+                  <div class="text-[11px] text-gray-400">
+                    Source: {{ ev.source || 'Direct Telemetry' }} • Confidence: <strong class="text-gray-200">{{ ev.confidenceScore }}%</strong>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-2 self-end sm:self-auto">
+                  <span :class="verificationBadgeClass(ev.verificationState)" class="text-[10px] px-2 py-0.5 rounded font-mono font-bold">
+                    {{ ev.verificationState || 'UNVERIFIED' }}
+                  </span>
+                  <button 
+                    @click="openEvidenceDetailDrawer(ev)" 
+                    class="text-xs px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700 transition"
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 3. TAB 1: EVIDENCE COLLECTION ==================== -->
     <div v-if="tab === 'evidence'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-white">Collected Evidence</h2>
-          <p class="text-xs text-gray-400">Search, filter, verify, and catalog digital and physical case evidence.</p>
+          <h2 class="text-lg font-bold text-white">Evidence Collection & Verification Dossier</h2>
+          <p class="text-xs text-gray-400">Catalog, inspect, verify, and link forensic artifacts, digital logs, and physical evidence.</p>
         </div>
         <button 
           @click="openAddEvidenceModal" 
-          class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium transition flex items-center space-x-1.5 shadow self-start sm:self-auto"
+          class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-1.5 shadow self-start sm:self-auto"
         >
-          <span>+ Add Evidence</span>
+          <span>+ Ingest Evidence</span>
         </button>
       </div>
 
-      <!-- Evidence Search and Filter Controls -->
-      <div class="bg-gray-800/80 p-3.5 rounded-lg border border-gray-700 flex flex-col md:flex-row gap-3 items-center justify-between">
+      <!-- Evidence Search, Filter & View Controls -->
+      <div class="bg-gray-800/90 p-4 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-3 items-center justify-between shadow">
         <div class="w-full md:w-1/2 relative">
           <input 
             v-model="evidenceSearch" 
             @input="onEvidenceSearchInput"
             type="text" 
-            placeholder="Search evidence by ID, title, type, or source..." 
-            class="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-4 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            placeholder="Search evidence by ID, title, type, source, or description..." 
+            class="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
           />
-          <svg class="w-4 h-4 text-gray-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
         </div>
@@ -116,9 +463,9 @@
               @change="fetchEvidence(1)"
               class="bg-gray-900 border border-gray-700 text-gray-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
             >
-              <option value="">All States</option>
-              <option value="UNVERIFIED">UNVERIFIED</option>
-              <option value="VERIFIED">VERIFIED</option>
+              <option value="">All States ({{ evidence.length }})</option>
+              <option value="UNVERIFIED">UNVERIFIED ({{ unverifiedEvidenceCount }})</option>
+              <option value="VERIFIED">VERIFIED ({{ verifiedEvidenceCount }})</option>
               <option value="DISPUTED">DISPUTED</option>
               <option value="REJECTED">REJECTED</option>
             </select>
@@ -144,63 +491,88 @@
       </div>
 
       <!-- Evidence Empty State -->
-      <div v-if="filteredEvidence.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-lg p-8 text-center">
-        <p class="text-gray-400 text-sm">No evidence matches the search or filter criteria.</p>
-        <button @click="openAddEvidenceModal" class="mt-3 text-blue-400 hover:underline text-sm font-medium">Add first evidence item</button>
+      <div v-if="filteredEvidence.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-xl p-10 text-center">
+        <p class="text-gray-400 text-sm font-medium">No evidence items match the search or filter criteria.</p>
+        <button @click="openAddEvidenceModal" class="mt-3 text-blue-400 hover:underline text-sm font-semibold">Ingest new evidence item</button>
       </div>
 
       <!-- Evidence Grid -->
       <div v-else class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div v-for="e in paginatedEvidence" :key="e._id" class="bg-gray-800 rounded-lg shadow border border-gray-700 p-4 flex flex-col justify-between hover:border-gray-600 transition">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div 
+            v-for="e in paginatedEvidence" 
+            :key="e._id" 
+            class="bg-gray-800/95 rounded-xl shadow border border-gray-700 p-4.5 flex flex-col justify-between hover:border-gray-600 transition space-y-3"
+          >
             <div>
               <div class="flex justify-between items-start gap-2 mb-2">
                 <div>
-                  <h3 class="text-base font-semibold text-white">{{ e.title }}</h3>
-                  <span class="text-xs text-gray-400">{{ e.type || 'Digital' }} <span v-if="e.source">• Source: {{ e.source }}</span></span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 text-gray-400 border border-gray-700 block mb-1 w-fit">
+                    {{ e._id }}
+                  </span>
+                  <h3 class="text-base font-bold text-white leading-snug">{{ e.title }}</h3>
+                  <div class="text-xs text-gray-400 mt-0.5">
+                    {{ e.type || 'Digital' }} <span v-if="e.source">• Source: <strong class="text-gray-300">{{ e.source }}</strong></span>
+                  </div>
                 </div>
-                <span :class="verificationBadgeClass(e.verificationState)" class="text-xs px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider">
+                <span :class="verificationBadgeClass(e.verificationState)" class="text-xs px-2.5 py-1 rounded font-mono font-bold uppercase tracking-wider whitespace-nowrap">
                   {{ e.verificationState || 'UNVERIFIED' }}
                 </span>
               </div>
               
-              <p v-if="e.description" class="text-sm text-gray-300 mb-3 bg-gray-900/50 p-2.5 rounded border border-gray-700/50">
+              <p v-if="e.description" class="text-xs text-gray-300 mb-3 bg-gray-900/60 p-2.5 rounded-lg border border-gray-700/60 line-clamp-3">
                 {{ e.description }}
               </p>
 
-              <div class="flex items-center justify-between text-xs text-gray-400 mb-4">
+              <div class="flex flex-wrap items-center justify-between text-xs text-gray-400 gap-2 mb-1">
                 <div>
                   <span>Confidence: </span>
-                  <span class="font-bold text-white">{{ e.confidenceScore !== undefined ? e.confidenceScore : 50 }}%</span>
+                  <span class="font-bold text-white font-mono">{{ e.confidenceScore !== undefined ? e.confidenceScore : 50 }}%</span>
                 </div>
-                <div v-if="e.uploadedBy" class="text-gray-400">
-                  By: {{ e.uploadedBy.name || e.uploadedBy.username || 'Investigator' }}
+                <div class="font-mono text-indigo-300 text-[11px] bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-800/30">
+                  {{ getEvidenceRelationshipCount(e._id) }} Linked Hypotheses
                 </div>
               </div>
             </div>
 
-            <!-- Evidence Actions: Verify / Dispute / Reject -->
-            <div class="border-t border-gray-700/80 pt-3 flex items-center justify-between">
-              <span class="text-xs text-gray-400 font-medium">Set Verification:</span>
-              <div class="flex space-x-1.5">
+            <!-- Evidence Actions -->
+            <div class="border-t border-gray-700/80 pt-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <button 
+                  @click="openEvidenceDetailDrawer(e)" 
+                  class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center space-x-1"
+                >
+                  <span>🔍 View Details</span>
+                </button>
+                <button 
+                  v-if="hypotheses.length > 0"
+                  @click="openLinkEvidenceModal(null, e._id)" 
+                  class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                >
+                  + Link to Theory
+                </button>
+              </div>
+
+              <!-- Verification Buttons: Verify / Dispute / Reject -->
+              <div class="grid grid-cols-3 gap-1.5 pt-1">
                 <button 
                   @click="verifyEvidenceItem(e._id, 'VERIFIED')" 
                   :disabled="verifyingId === e._id"
-                  :class="[e.verificationState === 'VERIFIED' ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-emerald-700 hover:text-white', 'text-xs px-2.5 py-1 rounded font-medium transition disabled:opacity-50']"
+                  :class="[e.verificationState === 'VERIFIED' ? 'bg-emerald-600 text-white font-bold' : 'bg-gray-700/80 text-gray-300 hover:bg-emerald-700 hover:text-white', 'text-xs py-1.5 rounded transition disabled:opacity-50 text-center']"
                 >
                   ✓ Verify
                 </button>
                 <button 
                   @click="verifyEvidenceItem(e._id, 'DISPUTED')" 
                   :disabled="verifyingId === e._id"
-                  :class="[e.verificationState === 'DISPUTED' ? 'bg-amber-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-amber-700 hover:text-white', 'text-xs px-2.5 py-1 rounded font-medium transition disabled:opacity-50']"
+                  :class="[e.verificationState === 'DISPUTED' ? 'bg-amber-600 text-white font-bold' : 'bg-gray-700/80 text-gray-300 hover:bg-amber-700 hover:text-white', 'text-xs py-1.5 rounded transition disabled:opacity-50 text-center']"
                 >
                   ⚠ Dispute
                 </button>
                 <button 
                   @click="verifyEvidenceItem(e._id, 'REJECTED')" 
                   :disabled="verifyingId === e._id"
-                  :class="[e.verificationState === 'REJECTED' ? 'bg-rose-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-rose-700 hover:text-white', 'text-xs px-2.5 py-1 rounded font-medium transition disabled:opacity-50']"
+                  :class="[e.verificationState === 'REJECTED' ? 'bg-rose-600 text-white font-bold' : 'bg-gray-700/80 text-gray-300 hover:bg-rose-700 hover:text-white', 'text-xs py-1.5 rounded transition disabled:opacity-50 text-center']"
                 >
                   ✕ Reject
                 </button>
@@ -210,7 +582,7 @@
         </div>
 
         <!-- Evidence Pagination -->
-        <div v-if="evidencePagination.totalPages > 1" class="bg-gray-800/80 border border-gray-700 rounded-lg p-3 flex items-center justify-between text-xs text-gray-400">
+        <div v-if="evidencePagination.totalPages > 1" class="bg-gray-800/90 border border-gray-700 rounded-xl p-3.5 flex items-center justify-between text-xs text-gray-400 shadow">
           <div>
             Showing page <span class="font-bold text-white">{{ evidencePagination.page }}</span> of <span class="font-bold text-white">{{ evidencePagination.totalPages }}</span> ({{ evidencePagination.total }} items)
           </div>
@@ -218,14 +590,14 @@
             <button 
               :disabled="evidencePagination.page <= 1" 
               @click="evidencePagination.page--" 
-              class="px-3 py-1 bg-gray-900 hover:bg-gray-700 text-white rounded border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="px-3 py-1.5 bg-gray-900 hover:bg-gray-700 text-white rounded-lg border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed font-medium"
             >
               Previous
             </button>
             <button 
               :disabled="evidencePagination.page >= evidencePagination.totalPages" 
               @click="evidencePagination.page++" 
-              class="px-3 py-1 bg-gray-900 hover:bg-gray-700 text-white rounded border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="px-3 py-1.5 bg-gray-900 hover:bg-gray-700 text-white rounded-lg border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed font-medium"
             >
               Next
             </button>
@@ -234,24 +606,24 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 2: HYPOTHESES ==================== -->
+    <!-- ==================== 4. TAB 2: HYPOTHESES & EXPLAINABILITY ==================== -->
     <div v-if="tab === 'hypotheses'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-white">Hypotheses & Analysis</h2>
-          <p class="text-xs text-gray-400">Formulate competing hypotheses and link evidence with SUPPORT or CONTRADICT relations.</p>
+          <h2 class="text-lg font-bold text-white">Competing Hypotheses & Intelligence Analysis</h2>
+          <p class="text-xs text-gray-400">Ranked competing theories scored through mathematical evidence links (SUPPORT / CONTRADICT).</p>
         </div>
         <div class="flex space-x-2 self-start sm:self-auto">
           <button 
             v-if="hypotheses.length > 0 && evidence.length > 0"
             @click="openLinkEvidenceModal(null)" 
-            class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded text-sm font-medium transition flex items-center space-x-1 shadow"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-1.5 shadow"
           >
             <span>🔗 Link Evidence</span>
           </button>
           <button 
             @click="openCreateHypothesisModal" 
-            class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium transition flex items-center space-x-1.5 shadow"
+            class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-1.5 shadow"
           >
             <span>+ Create Hypothesis</span>
           </button>
@@ -259,56 +631,97 @@
       </div>
 
       <!-- Hypotheses Empty State -->
-      <div v-if="hypotheses.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-lg p-8 text-center">
-        <p class="text-gray-400 text-sm">No hypotheses have been formulated for this case yet.</p>
-        <button @click="openCreateHypothesisModal" class="mt-3 text-blue-400 hover:underline text-sm font-medium">Create first hypothesis</button>
+      <div v-if="hypotheses.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-xl p-10 text-center">
+        <p class="text-gray-400 text-sm font-medium">No competing hypotheses have been formulated for this case yet.</p>
+        <button @click="openCreateHypothesisModal" class="mt-3 text-purple-400 hover:underline text-sm font-semibold">Formulate first hypothesis</button>
       </div>
 
-      <!-- Hypotheses List -->
+      <!-- Hypotheses Ranked List -->
       <div v-else class="space-y-4">
-        <div v-for="h in hypotheses" :key="h._id" class="bg-gray-800 rounded-lg shadow border border-gray-700 p-5 hover:border-gray-600 transition">
-          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
-            <div>
-              <h3 class="text-lg font-semibold text-white">{{ h.title }}</h3>
-              <p v-if="h.description" class="text-sm text-gray-300 mt-0.5">{{ h.description }}</p>
+        <div 
+          v-for="(h, index) in rankedHypotheses" 
+          :key="h._id" 
+          class="bg-gray-800/95 rounded-xl shadow-lg border p-5 transition space-y-4"
+          :class="index === 0 ? 'border-purple-600/70 ring-1 ring-purple-500/30' : 'border-gray-700 hover:border-gray-600'"
+        >
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2.5">
+                <span 
+                  class="text-xs px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider"
+                  :class="index === 0 ? 'bg-purple-900 text-purple-200 border border-purple-600' : 'bg-gray-900 text-gray-400 border border-gray-700'"
+                >
+                  {{ index === 0 ? '★ Leading Hypothesis' : `Rank #${index + 1}` }}
+                </span>
+                <span class="text-[10px] font-mono text-gray-400">ID: {{ h._id }}</span>
+              </div>
+              <h3 class="text-xl font-bold text-white leading-tight">{{ h.title }}</h3>
+              <p v-if="h.description" class="text-sm text-gray-300 mt-1 max-w-4xl leading-relaxed">{{ h.description }}</p>
             </div>
-            <div class="flex items-center space-x-3 self-end sm:self-auto">
-              <button 
-                v-if="evidence.length > 0"
-                @click="openLinkEvidenceModal(h._id)" 
-                class="text-xs bg-gray-700 hover:bg-gray-600 text-indigo-300 hover:text-indigo-200 border border-indigo-500/30 px-2.5 py-1 rounded transition"
-              >
-                + Link Evidence
-              </button>
+
+            <div class="flex items-center space-x-4 self-end sm:self-auto bg-gray-900/80 p-3 rounded-xl border border-gray-700/80">
               <div class="text-right">
-                <div class="text-xs uppercase text-gray-400 font-semibold tracking-wider">Score</div>
-                <div class="text-xl font-black font-mono" :class="h.score > 0 ? 'text-emerald-400' : h.score < 0 ? 'text-rose-400' : 'text-gray-400'">
+                <div class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Confidence Score</div>
+                <div class="text-2xl font-black font-mono" :class="h.score > 0 ? 'text-emerald-400' : h.score < 0 ? 'text-rose-400' : 'text-gray-400'">
                   {{ (h.score || 0).toFixed(2) }}
                 </div>
               </div>
+              <button 
+                v-if="evidence.length > 0"
+                @click="openLinkEvidenceModal(h._id)" 
+                class="text-xs bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold px-3 py-1.5 rounded-lg transition"
+              >
+                + Link Link
+              </button>
             </div>
           </div>
 
-          <!-- Explainability Section -->
-          <div class="mt-3 bg-gray-900/90 border border-gray-700/60 p-3.5 rounded-lg">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Mathematical Score Breakdown & Reasoning:</span>
-              <span class="text-xs text-gray-400 font-mono">{{ h.explainability ? h.explainability.length : 0 }} contributing links</span>
+          <!-- Relations KPI row -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-900/60 p-3 rounded-lg border border-gray-700/60 text-xs">
+            <div>
+              <span class="text-gray-400 block text-[10px] uppercase">Supporting Evidence:</span>
+              <span class="text-emerald-400 font-bold font-mono">{{ getHypothesisRelationCount(h._id, 'SUPPORT') }} items</span>
             </div>
-            
-            <div v-if="!h.explainability || h.explainability.length === 0" class="text-xs text-gray-400 italic py-1">
-              No evidence linked yet. Link supporting or contradicting evidence to compute scores.
+            <div>
+              <span class="text-gray-400 block text-[10px] uppercase">Contradicting Evidence:</span>
+              <span class="text-rose-400 font-bold font-mono">{{ getHypothesisRelationCount(h._id, 'CONTRADICT') }} items</span>
             </div>
-            <ul v-else class="space-y-1.5 mt-1">
-              <li 
+            <div class="sm:col-span-2">
+              <span class="text-gray-400 block text-[10px] uppercase">Strongest Evidence Factor:</span>
+              <span class="text-gray-200 font-mono truncate block" :title="getStrongestEvidenceTitle(h)">
+                {{ getStrongestEvidenceTitle(h) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- 5. EXPLAINABILITY ACCORDION / WHY THIS SCORE -->
+          <div class="bg-gray-900/90 border border-gray-700/80 p-4 rounded-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-blue-400 text-sm">⚖️</span>
+                <span class="text-xs font-bold text-gray-200 uppercase tracking-wider">Score Explainability & Factor Contributions</span>
+              </div>
+              <button 
+                @click="openExplainabilityModal(h)" 
+                class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold underline flex items-center space-x-1"
+              >
+                <span>Why this score? (Full Breakdown)</span>
+              </button>
+            </div>
+
+            <div v-if="!h.explainability || h.explainability.length === 0" class="text-xs text-gray-500 italic py-2">
+              No evidence linked yet. Link supporting or contradicting evidence to compute mathematical scores.
+            </div>
+            <div v-else class="space-y-1.5">
+              <div 
                 v-for="(exp, idx) in h.explainability" 
                 :key="idx" 
-                class="text-xs font-mono p-2 rounded flex items-start space-x-2"
+                class="text-xs font-mono p-2.5 rounded-lg flex items-start space-x-2"
                 :class="exp.startsWith('+') ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/40 text-rose-300 border border-rose-800/40'"
               >
                 <span>{{ exp }}</span>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -318,35 +731,35 @@
     <div v-if="tab === 'map'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-white">Interactive Evidence Map</h2>
-          <p class="text-xs text-gray-400">Visual relational graph showing links between collected evidence and competing hypotheses.</p>
+          <h2 class="text-lg font-bold text-white">Interactive Evidence Map</h2>
+          <p class="text-xs text-gray-400">Visual relational graph showing links between collected evidence nodes and competing hypotheses.</p>
         </div>
         <div class="flex items-center space-x-2">
-          <span class="text-xs text-gray-400">Filter links:</span>
-          <select v-model="mapLinkFilter" class="bg-gray-800 border border-gray-700 text-xs text-gray-300 rounded px-2.5 py-1">
-            <option value="ALL">All Relations</option>
-            <option value="SUPPORT">Support Only (Green)</option>
-            <option value="CONTRADICT">Contradict Only (Red)</option>
+          <span class="text-xs text-gray-400 font-medium">Filter links:</span>
+          <select v-model="mapLinkFilter" class="bg-gray-800 border border-gray-700 text-xs text-gray-300 rounded-lg px-3 py-1.5">
+            <option value="ALL">All Relations ({{ caseRelationships.length }})</option>
+            <option value="SUPPORT">Support Only (+)</option>
+            <option value="CONTRADICT">Contradict Only (-)</option>
           </select>
         </div>
       </div>
 
-      <div v-if="evidence.length === 0 && hypotheses.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-lg p-12 text-center text-gray-400 text-sm">
+      <div v-if="evidence.length === 0 && hypotheses.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-xl p-12 text-center text-gray-400 text-sm">
         Add evidence and hypotheses to generate the intelligence relationship graph.
       </div>
 
-      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Interactive Graph Area -->
-        <div class="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-lg p-4 relative min-h-[420px] overflow-hidden flex flex-col justify-between">
+        <div class="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-xl p-5 relative min-h-[460px] overflow-hidden flex flex-col justify-between shadow-xl">
           <!-- Graph Legend -->
-          <div class="flex items-center space-x-4 text-xs text-gray-400 border-b border-gray-800 pb-2 mb-4">
+          <div class="flex flex-wrap items-center gap-4 text-xs text-gray-400 border-b border-gray-800 pb-3 mb-4 font-mono">
             <div class="flex items-center space-x-1.5">
               <span class="w-3 h-3 rounded bg-blue-600 inline-block"></span>
-              <span>Evidence Nodes</span>
+              <span class="text-gray-300">Evidence Nodes</span>
             </div>
             <div class="flex items-center space-x-1.5">
               <span class="w-3 h-3 rounded bg-purple-600 inline-block"></span>
-              <span>Hypothesis Nodes</span>
+              <span class="text-gray-300">Hypothesis Nodes</span>
             </div>
             <div class="flex items-center space-x-1.5">
               <span class="w-4 h-0.5 bg-emerald-500 inline-block"></span>
@@ -358,23 +771,26 @@
             </div>
           </div>
 
-          <!-- SVG Visual Connections Canvas -->
-          <div class="grid grid-cols-2 gap-8 py-2 relative z-10">
+          <!-- Nodes Columns -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2 relative z-10">
             <!-- Left: Evidence Column -->
-            <div class="space-y-3">
-              <div class="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-2">Evidence Items ({{ evidence.length }})</div>
+            <div class="space-y-2.5">
+              <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1 flex justify-between">
+                <span>Evidence Items</span>
+                <span>({{ evidence.length }})</span>
+              </div>
               <div 
                 v-for="evNode in evidence" 
                 :key="evNode._id"
                 @click="selectGraphNode('evidence', evNode)"
                 :class="[
-                  selectedGraphItem?.id === evNode._id ? 'ring-2 ring-blue-400 bg-blue-950/40 border-blue-500' : 'bg-gray-800/90 border-gray-700 hover:border-blue-400/60',
+                  selectedGraphItem?.id === evNode._id ? 'ring-2 ring-blue-400 bg-blue-950/60 border-blue-500' : 'bg-gray-800/90 border-gray-700 hover:border-blue-400/60',
                   'p-3 rounded-lg border cursor-pointer transition flex flex-col justify-between shadow'
                 ]"
               >
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-white truncate max-w-[150px]">{{ evNode.title }}</span>
-                  <span :class="verificationBadgeClass(evNode.verificationState)" class="text-[10px] px-1.5 py-0.5 rounded font-mono">
+                  <span class="text-xs font-bold text-white truncate max-w-[170px]">{{ evNode.title }}</span>
+                  <span :class="verificationBadgeClass(evNode.verificationState)" class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">
                     {{ evNode.verificationState }}
                   </span>
                 </div>
@@ -386,25 +802,29 @@
             </div>
 
             <!-- Right: Hypotheses Column -->
-            <div class="space-y-3">
-              <div class="text-xs font-semibold uppercase tracking-wider text-purple-400 mb-2">Hypotheses ({{ hypotheses.length }})</div>
+            <div class="space-y-2.5">
+              <div class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1 flex justify-between">
+                <span>Hypotheses</span>
+                <span>({{ hypotheses.length }})</span>
+              </div>
               <div 
-                v-for="hypNode in hypotheses" 
+                v-for="hypNode in rankedHypotheses" 
                 :key="hypNode._id"
                 @click="selectGraphNode('hypothesis', hypNode)"
                 :class="[
-                  selectedGraphItem?.id === hypNode._id ? 'ring-2 ring-purple-400 bg-purple-950/40 border-purple-500' : 'bg-gray-800/90 border-gray-700 hover:border-purple-400/60',
+                  selectedGraphItem?.id === hypNode._id ? 'ring-2 ring-purple-400 bg-purple-950/60 border-purple-500' : 'bg-gray-800/90 border-gray-700 hover:border-purple-400/60',
                   'p-3 rounded-lg border cursor-pointer transition flex flex-col justify-between shadow'
                 ]"
               >
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-white truncate max-w-[150px]">{{ hypNode.title }}</span>
+                  <span class="text-xs font-bold text-white truncate max-w-[170px]">{{ hypNode.title }}</span>
                   <span class="text-xs font-mono font-bold" :class="hypNode.score > 0 ? 'text-emerald-400' : hypNode.score < 0 ? 'text-rose-400' : 'text-gray-400'">
                     {{ hypNode.score?.toFixed(2) }}
                   </span>
                 </div>
-                <div class="text-[11px] text-gray-400 mt-1">
-                  {{ (hypNode.explainability || []).length }} contributing links
+                <div class="text-[11px] text-gray-400 mt-1 flex justify-between">
+                  <span>{{ (hypNode.explainability || []).length }} contributing links</span>
+                  <span class="text-purple-300 text-[10px]">Inspect ➔</span>
                 </div>
               </div>
             </div>
@@ -412,7 +832,7 @@
 
           <!-- Active Relationships List at bottom -->
           <div class="border-t border-gray-800 pt-3 mt-4">
-            <div class="text-xs font-semibold uppercase text-gray-400 mb-2">Active Linked Relationships ({{ filteredGraphRelationships.length }})</div>
+            <div class="text-xs font-bold uppercase text-gray-400 mb-2">Active Graph Relationships ({{ filteredGraphRelationships.length }})</div>
             <div v-if="filteredGraphRelationships.length === 0" class="text-xs text-gray-500 italic">No relationships mapped. Use "+ Link Evidence" to construct graph edges.</div>
             <div v-else class="flex flex-wrap gap-2">
               <div 
@@ -421,81 +841,84 @@
                 @click="selectGraphRelationship(rel)"
                 :class="[
                   rel.type === 'SUPPORT' ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-rose-950/60 border-rose-800 text-rose-300',
-                  'text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:opacity-90 font-mono transition'
+                  'text-xs px-2.5 py-1 rounded-full border cursor-pointer hover:opacity-90 font-mono transition shadow-sm'
                 ]"
               >
-                {{ getEvidenceTitle(rel.evidenceId) }} ➔ {{ rel.type }} (str: {{ rel.strength }}) ➔ {{ getHypothesisTitle(rel.hypothesisId) }}
+                {{ getEvidenceTitle(rel.evidenceId) }} ➔ {{ rel.type }} (weight: {{ rel.strength }}) ➔ {{ getHypothesisTitle(rel.hypothesisId) }}
               </div>
             </div>
           </div>
         </div>
 
         <!-- Node / Link Details Inspector Panel -->
-        <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex flex-col justify-between">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 flex flex-col justify-between shadow-xl">
           <div>
-            <div class="flex items-center justify-between border-b border-gray-700 pb-2 mb-3">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-gray-300">Entity Inspector</h3>
-              <span v-if="selectedGraphItem" class="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-300 font-mono">
+            <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-gray-200">Entity Inspector</h3>
+              <span v-if="selectedGraphItem" class="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-300 font-mono font-bold">
                 {{ selectedGraphItem.type.toUpperCase() }}
               </span>
             </div>
 
-            <div v-if="!selectedGraphItem" class="py-12 text-center text-xs text-gray-400">
-              Click on any evidence node, hypothesis, or relationship in the map to inspect its data and mathematical contributions.
+            <div v-if="!selectedGraphItem" class="py-16 text-center text-xs text-gray-400 space-y-2">
+              <div class="text-2xl">🔍</div>
+              <p>Click on any evidence node, hypothesis card, or relationship in the map to inspect its data and mathematical contributions.</p>
             </div>
 
-            <div v-else class="space-y-3 text-xs">
+            <div v-else class="space-y-4 text-xs">
               <div>
-                <div class="text-gray-400 uppercase text-[10px]">Title</div>
+                <div class="text-gray-400 uppercase text-[10px] font-bold">Title</div>
                 <div class="font-bold text-white text-sm mt-0.5">{{ selectedGraphItem.data.title || selectedGraphItem.data.name || 'Relationship Link' }}</div>
               </div>
 
-              <div v-if="selectedGraphItem.type === 'evidence'" class="space-y-2">
-                <div class="grid grid-cols-2 gap-2 bg-gray-900/80 p-2.5 rounded border border-gray-700 font-mono text-[11px]">
+              <div v-if="selectedGraphItem.type === 'evidence'" class="space-y-3">
+                <div class="grid grid-cols-2 gap-2 bg-gray-900/80 p-3 rounded-lg border border-gray-700 font-mono text-[11px]">
                   <div>
-                    <span class="text-gray-400 block">State:</span>
+                    <span class="text-gray-400 block text-[10px]">Verification:</span>
                     <span class="text-white font-bold">{{ selectedGraphItem.data.verificationState }}</span>
                   </div>
                   <div>
-                    <span class="text-gray-400 block">Confidence:</span>
+                    <span class="text-gray-400 block text-[10px]">Confidence:</span>
                     <span class="text-white font-bold">{{ selectedGraphItem.data.confidenceScore }}%</span>
                   </div>
                   <div>
-                    <span class="text-gray-400 block">Type:</span>
+                    <span class="text-gray-400 block text-[10px]">Type:</span>
                     <span class="text-white font-bold">{{ selectedGraphItem.data.type }}</span>
                   </div>
                   <div>
-                    <span class="text-gray-400 block">Source:</span>
+                    <span class="text-gray-400 block text-[10px]">Source:</span>
                     <span class="text-white font-bold">{{ selectedGraphItem.data.source || 'N/A' }}</span>
                   </div>
                 </div>
-                <div class="text-gray-300">{{ selectedGraphItem.data.description || 'No description provided.' }}</div>
+                <div class="text-gray-300 bg-gray-900/40 p-2.5 rounded border border-gray-700/50">
+                  {{ selectedGraphItem.data.description || 'No description provided.' }}
+                </div>
               </div>
 
-              <div v-if="selectedGraphItem.type === 'hypothesis'" class="space-y-2">
-                <div class="bg-gray-900/80 p-2.5 rounded border border-gray-700 font-mono text-[11px]">
-                  <span class="text-gray-400 block">Total Score:</span>
-                  <span class="text-base font-bold" :class="selectedGraphItem.data.score > 0 ? 'text-emerald-400' : 'text-rose-400'">
+              <div v-if="selectedGraphItem.type === 'hypothesis'" class="space-y-3">
+                <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 font-mono text-[11px]">
+                  <span class="text-gray-400 block text-[10px]">Calculated Score:</span>
+                  <span class="text-lg font-black" :class="selectedGraphItem.data.score > 0 ? 'text-emerald-400' : 'text-rose-400'">
                     {{ selectedGraphItem.data.score?.toFixed(2) }}
                   </span>
                 </div>
-                <div class="text-xs font-semibold text-gray-300 uppercase mt-2">Active Formula Contributions:</div>
-                <div class="space-y-1">
+                <div class="text-xs font-bold text-gray-300 uppercase">Active Formula Contributions:</div>
+                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                   <div 
                     v-for="(exp, idx) in selectedGraphItem.data.explainability || []" 
                     :key="idx"
-                    class="p-1.5 rounded text-[11px] font-mono"
-                    :class="exp.startsWith('+') ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'"
+                    class="p-2 rounded text-[11px] font-mono"
+                    :class="exp.startsWith('+') ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40' : 'bg-rose-950/40 text-rose-300 border border-rose-800/40'"
                   >
                     {{ exp }}
                   </div>
                 </div>
               </div>
 
-              <div v-if="selectedGraphItem.type === 'relationship'" class="space-y-2">
-                <div class="bg-gray-900/80 p-2.5 rounded border border-gray-700 font-mono text-[11px] space-y-1">
-                  <div><span class="text-gray-400">Type:</span> <span class="text-white font-bold">{{ selectedGraphItem.data.type }}</span></div>
-                  <div><span class="text-gray-400">Strength Weight:</span> <span class="text-white font-bold">{{ selectedGraphItem.data.strength }} / 10</span></div>
+              <div v-if="selectedGraphItem.type === 'relationship'" class="space-y-3">
+                <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700 font-mono text-[11px] space-y-1.5">
+                  <div><span class="text-gray-400">Type:</span> <strong class="text-white">{{ selectedGraphItem.data.type }}</strong></div>
+                  <div><span class="text-gray-400">Strength Weight:</span> <strong class="text-white">{{ selectedGraphItem.data.strength }} / 10</strong></div>
                   <div><span class="text-gray-400">Evidence:</span> <span class="text-blue-300">{{ getEvidenceTitle(selectedGraphItem.data.evidenceId) }}</span></div>
                   <div><span class="text-gray-400">Hypothesis:</span> <span class="text-purple-300">{{ getHypothesisTitle(selectedGraphItem.data.hypothesisId) }}</span></div>
                 </div>
@@ -503,8 +926,8 @@
             </div>
           </div>
 
-          <div v-if="selectedGraphItem" class="pt-3 border-t border-gray-700 mt-4">
-            <button @click="selectedGraphItem = null" class="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-1.5 rounded transition">
+          <div v-if="selectedGraphItem" class="pt-4 border-t border-gray-700 mt-4">
+            <button @click="selectedGraphItem = null" class="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded-lg font-semibold transition">
               Close Inspector
             </button>
           </div>
@@ -516,13 +939,13 @@
     <div v-if="tab === 'timeline'" class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-white">Investigation Timeline & Audit Trail</h2>
-          <p class="text-xs text-gray-400">Chronological history of case mutations, evidence additions, verification cycles, and hypothesis formulate events.</p>
+          <h2 class="text-lg font-bold text-white">Investigation Timeline & Audit Trail</h2>
+          <p class="text-xs text-gray-400">Chronological history of case mutations, evidence additions, verification cycles, and hypothesis formulation events.</p>
         </div>
         <button 
           @click="fetchTimeline" 
           :disabled="timelineLoading"
-          class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3 py-1.5 rounded text-xs font-medium transition flex items-center space-x-1.5 self-start sm:self-auto"
+          class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 self-start sm:self-auto"
         >
           <svg :class="{ 'animate-spin': timelineLoading }" class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -533,30 +956,30 @@
 
       <!-- Timeline Empty State -->
       <div v-if="timelineLoading" class="py-12 text-center text-gray-400 text-xs">Loading case event timeline...</div>
-      <div v-else-if="timelineLogs.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-lg p-12 text-center text-gray-400 text-sm">
+      <div v-else-if="timelineLogs.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-xl p-12 text-center text-gray-400 text-sm">
         No chronological audit events recorded for this case dossier yet.
       </div>
 
       <!-- Chronological Timeline Stream -->
-      <div v-else class="relative pl-6 border-l-2 border-gray-700 space-y-6 my-4">
+      <div v-else class="relative pl-6 sm:pl-8 border-l-2 border-gray-700 space-y-6 my-4">
         <div v-for="(log, idx) in timelineLogs" :key="log._id || idx" class="relative group">
           <!-- Timeline Marker Icon -->
-          <div :class="timelineMarkerClass(log.action)" class="absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 border-gray-900 ring-2 ring-gray-700"></div>
+          <div :class="timelineMarkerClass(log.action)" class="absolute -left-[31px] sm:-left-[39px] top-1 w-4 h-4 rounded-full border-2 border-gray-900 ring-2 ring-gray-700"></div>
 
           <!-- Timeline Card -->
-          <div class="bg-gray-800 border border-gray-700 p-4 rounded-lg shadow hover:border-gray-600 transition">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+          <div class="bg-gray-800/95 border border-gray-700 p-4.5 rounded-xl shadow hover:border-gray-600 transition space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <div class="flex items-center space-x-2">
-                <span :class="timelineBadgeClass(log.action)" class="text-xs px-2 py-0.5 rounded font-mono font-bold">
+                <span :class="timelineBadgeClass(log.action)" class="text-xs px-2.5 py-0.5 rounded font-mono font-bold">
                   {{ log.action }}
                 </span>
-                <span class="text-xs text-gray-300">by <strong class="text-white">{{ log.user?.name || log.user?.username || 'System Agent' }}</strong> ({{ log.user?.role || 'Agent' }})</span>
+                <span class="text-xs text-gray-300">by <strong class="text-white">{{ log.user?.name || log.user?.username || 'Agent' }}</strong> ({{ log.user?.role || 'Investigator' }})</span>
               </div>
               <span class="text-xs text-gray-400 font-mono">{{ formatDateTime(log.createdAt) }}</span>
             </div>
 
             <!-- Event Details Body -->
-            <div class="text-xs text-gray-300 font-mono bg-gray-900/70 p-2.5 rounded border border-gray-700/60">
+            <div class="text-xs text-gray-300 font-mono bg-gray-900/70 p-3 rounded-lg border border-gray-700/60">
               <div v-if="log.details?.title" class="text-blue-300 font-bold mb-1">Target Title: "{{ log.details.title }}"</div>
               <div v-if="log.details?.oldState && log.details?.newState" class="text-emerald-400">
                 Verification State Shifted: <span class="text-gray-400">{{ log.details.oldState }}</span> ➔ <span class="font-bold underline">{{ log.details.newState }}</span>
@@ -576,10 +999,226 @@
       </div>
     </div>
 
+    <!-- ==================== TAB 5: CASE AUDIT LOG ==================== -->
+    <div v-if="tab === 'audit'" class="space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-white">Immutable Case Audit Logs</h2>
+          <p class="text-xs text-gray-400">Forensic, tamper-evident audit records specific to this case identifier.</p>
+        </div>
+        <button 
+          @click="fetchTimeline" 
+          class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5"
+        >
+          <span>Refresh Logs</span>
+        </button>
+      </div>
+
+      <div v-if="timelineLogs.length === 0" class="bg-gray-800/50 border border-dashed border-gray-700 rounded-xl p-12 text-center text-gray-400 text-sm">
+        No audit entries recorded for this case.
+      </div>
+
+      <div v-else class="bg-gray-800/90 border border-gray-700 rounded-xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-300">
+            <thead class="bg-gray-900/90 text-gray-400 font-mono uppercase text-[10px] tracking-wider border-b border-gray-700">
+              <tr>
+                <th class="p-3.5">Timestamp</th>
+                <th class="p-3.5">Action</th>
+                <th class="p-3.5">Actor</th>
+                <th class="p-3.5">Entity Type</th>
+                <th class="p-3.5">Details Payload</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700/60 font-mono text-[11px]">
+              <tr v-for="log in timelineLogs" :key="log._id" class="hover:bg-gray-700/40 transition">
+                <td class="p-3.5 whitespace-nowrap text-gray-400">{{ formatDateTime(log.createdAt) }}</td>
+                <td class="p-3.5 whitespace-nowrap">
+                  <span :class="timelineBadgeClass(log.action)" class="px-2 py-0.5 rounded font-bold">
+                    {{ log.action }}
+                  </span>
+                </td>
+                <td class="p-3.5 whitespace-nowrap text-gray-200 font-bold">
+                  {{ log.user?.name || log.user?.username || 'Agent' }} ({{ log.user?.role || 'Investigator' }})
+                </td>
+                <td class="p-3.5 whitespace-nowrap text-gray-400">{{ log.entityType }}</td>
+                <td class="p-3.5 text-gray-300 max-w-md truncate" :title="JSON.stringify(log.details)">
+                  {{ JSON.stringify(log.details) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== EVIDENCE DETAIL DRAWER / MODAL ==================== -->
+    <div v-if="selectedEvidenceDetail" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-start border-b border-gray-700 pb-3">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 text-blue-400 border border-gray-700 block mb-1 w-fit">
+              ID: {{ selectedEvidenceDetail._id }}
+            </span>
+            <h3 class="text-xl font-bold text-white">{{ selectedEvidenceDetail.title }}</h3>
+          </div>
+          <button @click="selectedEvidenceDetail = null" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-900/80 p-3.5 rounded-xl border border-gray-700 font-mono text-xs">
+          <div>
+            <span class="text-gray-400 block text-[10px] uppercase">State:</span>
+            <span :class="verificationBadgeClass(selectedEvidenceDetail.verificationState)" class="px-2 py-0.5 rounded font-bold inline-block mt-0.5">
+              {{ selectedEvidenceDetail.verificationState }}
+            </span>
+          </div>
+          <div>
+            <span class="text-gray-400 block text-[10px] uppercase">Confidence:</span>
+            <span class="text-white font-bold text-sm block mt-0.5">{{ selectedEvidenceDetail.confidenceScore }}%</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block text-[10px] uppercase">Type:</span>
+            <span class="text-white font-bold block mt-0.5">{{ selectedEvidenceDetail.type }}</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block text-[10px] uppercase">Source:</span>
+            <span class="text-white font-bold block mt-0.5 truncate">{{ selectedEvidenceDetail.source || 'N/A' }}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">Description & Discovery Context</h4>
+          <p class="text-sm text-gray-200 bg-gray-900/60 p-3.5 rounded-lg border border-gray-700/60 leading-relaxed">
+            {{ selectedEvidenceDetail.description || 'No detailed descriptive narrative attached to this evidence artifact.' }}
+          </p>
+        </div>
+
+        <!-- Linked Hypotheses in Detail Drawer -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">Linked Competing Hypotheses</h4>
+          <div v-if="getLinkedHypothesesForEvidence(selectedEvidenceDetail._id).length === 0" class="text-xs text-gray-400 italic bg-gray-900/40 p-3 rounded-lg border border-gray-700/50">
+            This evidence item is not linked to any hypotheses yet.
+          </div>
+          <div v-else class="space-y-2">
+            <div 
+              v-for="link in getLinkedHypothesesForEvidence(selectedEvidenceDetail._id)" 
+              :key="link._id"
+              class="p-2.5 rounded-lg border text-xs flex justify-between items-center"
+              :class="link.type === 'SUPPORT' ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200' : 'bg-rose-950/40 border-rose-800/60 text-rose-200'"
+            >
+              <div class="font-mono">
+                <strong>{{ link.hypothesisTitle }}</strong>
+                <span class="opacity-80 block text-[11px]">{{ link.type }} (Strength: {{ link.strength }}/10)</span>
+              </div>
+              <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-900 text-gray-200 border border-gray-700">
+                Weight: {{ link.strength }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Controls Inside Drawer -->
+        <div class="pt-4 border-t border-gray-700 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-gray-400">Set State:</span>
+            <button 
+              @click="verifyEvidenceItem(selectedEvidenceDetail._id, 'VERIFIED')" 
+              class="px-2.5 py-1 text-xs bg-emerald-700 hover:bg-emerald-600 text-white rounded font-bold"
+            >
+              ✓ Verify
+            </button>
+            <button 
+              @click="verifyEvidenceItem(selectedEvidenceDetail._id, 'DISPUTED')" 
+              class="px-2.5 py-1 text-xs bg-amber-700 hover:bg-amber-600 text-white rounded font-bold"
+            >
+              ⚠ Dispute
+            </button>
+            <button 
+              @click="verifyEvidenceItem(selectedEvidenceDetail._id, 'REJECTED')" 
+              class="px-2.5 py-1 text-xs bg-rose-700 hover:bg-rose-600 text-white rounded font-bold"
+            >
+              ✕ Reject
+            </button>
+          </div>
+
+          <button 
+            @click="selectedEvidenceDetail = null" 
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg transition"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== EXPLAINABILITY MODAL ==================== -->
+    <div v-if="selectedExplainHypothesis" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-start border-b border-gray-700 pb-3">
+          <div>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 block mb-1 w-fit">
+              Score Explainability Engine
+            </span>
+            <h3 class="text-xl font-bold text-white">{{ selectedExplainHypothesis.title }}</h3>
+          </div>
+          <button @click="selectedExplainHypothesis = null" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+
+        <div class="bg-gray-900/90 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+          <div>
+            <div class="text-xs uppercase text-gray-400 font-bold">Total Computed Score</div>
+            <div class="text-3xl font-black font-mono mt-1" :class="selectedExplainHypothesis.score > 0 ? 'text-emerald-400' : 'text-rose-400'">
+              {{ (selectedExplainHypothesis.score || 0).toFixed(2) }}
+            </div>
+          </div>
+          <div class="text-right text-xs text-gray-400 space-y-1 font-mono">
+            <div>Supporting: <strong class="text-emerald-400">{{ getHypothesisRelationCount(selectedExplainHypothesis._id, 'SUPPORT') }}</strong></div>
+            <div>Contradicting: <strong class="text-rose-400">{{ getHypothesisRelationCount(selectedExplainHypothesis._id, 'CONTRADICT') }}</strong></div>
+          </div>
+        </div>
+
+        <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-700/60 text-xs text-gray-300">
+          <p class="font-bold text-blue-400 mb-1">Mathematical Formula:</p>
+          <p class="font-mono text-gray-400">
+            Net Score = Σ (Support Links) - Σ (Contradict Links)<br/>
+            Link Contribution = Strength × (Confidence % / 100) × State Multiplier<br/>
+            [VERIFIED: 1.0, UNVERIFIED: 0.5, DISPUTED: 0.2, REJECTED: 0.0]
+          </p>
+        </div>
+
+        <!-- Detailed Formula Lines -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-300">Active Mathematical Factors</h4>
+          <div v-if="!selectedExplainHypothesis.explainability || selectedExplainHypothesis.explainability.length === 0" class="text-xs text-gray-500 italic py-4 text-center">
+            No active evidence links computed for this theory.
+          </div>
+          <div v-else class="space-y-2">
+            <div 
+              v-for="(exp, idx) in selectedExplainHypothesis.explainability" 
+              :key="idx"
+              class="p-3 rounded-lg border text-xs font-mono"
+              :class="exp.startsWith('+') ? 'bg-emerald-950/40 border-emerald-800 text-emerald-200' : 'bg-rose-950/40 border-rose-800 text-rose-200'"
+            >
+              {{ exp }}
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-gray-700 flex justify-end">
+          <button 
+            @click="selectedExplainHypothesis = null" 
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg transition"
+          >
+            Close Breakdown
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL: ADD EVIDENCE -->
-    <div v-if="showAddEvidenceModal" class="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-      <div class="bg-gray-800 border border-gray-700 rounded-lg max-w-lg w-full p-6 shadow-2xl">
-        <h3 class="text-xl font-bold text-white mb-4">Add Case Evidence</h3>
+    <div v-if="showAddEvidenceModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl max-w-lg w-full p-6 shadow-2xl">
+        <h3 class="text-xl font-bold text-white mb-4">Ingest Case Evidence</h3>
         
         <form @submit.prevent="submitAddEvidence" class="space-y-4">
           <div>
@@ -587,15 +1226,15 @@
             <input 
               v-model="evidenceForm.title" 
               required 
-              placeholder="e.g., Server Auth Audit Logs, Weapon Serial #..." 
-              class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="e.g., Firewall Breach Logs, Forensic Disk Image..." 
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Type</label>
-              <select v-model="evidenceForm.type" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <select v-model="evidenceForm.type" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 <option value="Digital">Digital</option>
                 <option value="Physical">Physical</option>
                 <option value="Document">Document</option>
@@ -614,7 +1253,7 @@
                 min="0" 
                 max="100" 
                 required 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono font-bold"
               />
             </div>
           </div>
@@ -622,7 +1261,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Verification State</label>
-              <select v-model="evidenceForm.verificationState" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <select v-model="evidenceForm.verificationState" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 <option value="UNVERIFIED">UNVERIFIED</option>
                 <option value="VERIFIED">VERIFIED</option>
                 <option value="DISPUTED">DISPUTED</option>
@@ -634,26 +1273,26 @@
               <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Source / Origin</label>
               <input 
                 v-model="evidenceForm.source" 
-                placeholder="e.g., Forensic Disk Image 04" 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="e.g., Edge Gateway, SOC Telemetry" 
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Description</label>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Description Narrative</label>
             <textarea 
               v-model="evidenceForm.description" 
               rows="3" 
-              placeholder="Technical characteristics, hash values, discovery context..." 
-              class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="Technical characteristics, hash signatures, context..." 
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
             ></textarea>
           </div>
 
           <div class="flex justify-end space-x-3 pt-3 border-t border-gray-700">
             <button type="button" @click="showAddEvidenceModal = false" class="px-4 py-2 text-sm text-gray-300 hover:text-white">Cancel</button>
-            <button type="submit" :disabled="submittingModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded transition disabled:opacity-50">
-              {{ submittingModal ? 'Adding...' : 'Add Evidence' }}
+            <button type="submit" :disabled="submittingModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50">
+              {{ submittingModal ? 'Ingesting...' : 'Ingest Evidence' }}
             </button>
           </div>
         </form>
@@ -661,8 +1300,8 @@
     </div>
 
     <!-- MODAL: CREATE HYPOTHESIS -->
-    <div v-if="showCreateHypothesisModal" class="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-      <div class="bg-gray-800 border border-gray-700 rounded-lg max-w-lg w-full p-6 shadow-2xl">
+    <div v-if="showCreateHypothesisModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl max-w-lg w-full p-6 shadow-2xl">
         <h3 class="text-xl font-bold text-white mb-4">Formulate Competing Hypothesis</h3>
         
         <form @submit.prevent="submitCreateHypothesis" class="space-y-4">
@@ -671,24 +1310,24 @@
             <input 
               v-model="hypothesisForm.title" 
               required 
-              placeholder="e.g., Insider Credential Theft via Compromised Workstation" 
-              class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="e.g., External Exploitation Attempt, Insider Credential Theft..." 
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Theory Description</label>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Theory Narrative</label>
             <textarea 
               v-model="hypothesisForm.description" 
               rows="3" 
               placeholder="Explain the causal chain, motive, and expected artifact trail..." 
-              class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
             ></textarea>
           </div>
 
           <div class="flex justify-end space-x-3 pt-3 border-t border-gray-700">
             <button type="button" @click="showCreateHypothesisModal = false" class="px-4 py-2 text-sm text-gray-300 hover:text-white">Cancel</button>
-            <button type="submit" :disabled="submittingModal" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded transition disabled:opacity-50">
+            <button type="submit" :disabled="submittingModal" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50">
               {{ submittingModal ? 'Formulating...' : 'Create Hypothesis' }}
             </button>
           </div>
@@ -697,14 +1336,14 @@
     </div>
 
     <!-- MODAL: LINK EVIDENCE TO HYPOTHESIS -->
-    <div v-if="showLinkEvidenceModal" class="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-      <div class="bg-gray-800 border border-gray-700 rounded-lg max-w-lg w-full p-6 shadow-2xl">
+    <div v-if="showLinkEvidenceModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl max-w-lg w-full p-6 shadow-2xl">
         <h3 class="text-xl font-bold text-white mb-4">Link Evidence to Hypothesis</h3>
         
         <form @submit.prevent="submitLinkEvidence" class="space-y-4">
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Select Hypothesis *</label>
-            <select v-model="linkForm.hypothesisId" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select v-model="linkForm.hypothesisId" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option v-for="h in hypotheses" :key="h._id" :value="h._id">
                 {{ h.title }} (Current Score: {{ (h.score || 0).toFixed(2) }})
               </option>
@@ -713,7 +1352,7 @@
 
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Select Evidence Item *</label>
-            <select v-model="linkForm.evidenceId" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <select v-model="linkForm.evidenceId" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option v-for="e in evidence" :key="e._id" :value="e._id">
                 {{ e.title }} [{{ e.verificationState || 'UNVERIFIED' }} - {{ e.confidenceScore }}% conf]
               </option>
@@ -723,7 +1362,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1">Relationship Type</label>
-              <select v-model="linkForm.type" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold">
+              <select v-model="linkForm.type" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold">
                 <option value="SUPPORT">SUPPORT (+)</option>
                 <option value="CONTRADICT">CONTRADICT (-)</option>
               </select>
@@ -737,13 +1376,13 @@
                 min="1" 
                 max="10" 
                 required 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold"
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono font-bold"
               />
             </div>
           </div>
 
-          <div class="bg-gray-900/80 p-3 rounded border border-gray-700/60 text-xs text-gray-300">
-            <p class="font-semibold text-blue-400 mb-1">Calculation Preview Rule:</p>
+          <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-700/60 text-xs text-gray-300">
+            <p class="font-semibold text-blue-400 mb-1">Calculation Rule:</p>
             <p class="text-gray-400">
               Contribution = Strength × (Confidence / 100) × State Multiplier (VERIFIED: 1.0, UNVERIFIED: 0.5, DISPUTED: 0.2, REJECTED: 0.0).
             </p>
@@ -751,7 +1390,7 @@
 
           <div class="flex justify-end space-x-3 pt-3 border-t border-gray-700">
             <button type="button" @click="showLinkEvidenceModal = false" class="px-4 py-2 text-sm text-gray-300 hover:text-white">Cancel</button>
-            <button type="submit" :disabled="submittingModal" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded transition disabled:opacity-50">
+            <button type="submit" :disabled="submittingModal" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50">
               {{ submittingModal ? 'Linking...' : 'Establish Link & Recalculate' }}
             </button>
           </div>
@@ -768,7 +1407,7 @@ import { apiFetch } from '../utils/api';
 
 const route = useRoute();
 
-const tab = ref('evidence');
+const tab = ref('overview');
 const caseItem = ref(null);
 const evidence = ref([]);
 const hypotheses = ref([]);
@@ -790,6 +1429,10 @@ const evidencePagination = ref({ page: 1, limit: 6, total: 0, totalPages: 1 });
 // Evidence Map (Graph) State
 const mapLinkFilter = ref('ALL');
 const selectedGraphItem = ref(null);
+
+// Detail & Explainability Modal States
+const selectedEvidenceDetail = ref(null);
+const selectedExplainHypothesis = ref(null);
 
 // Modal Visibility & Forms
 const showAddEvidenceModal = ref(false);
@@ -826,6 +1469,35 @@ const showNotification = (text, type = 'success') => {
       actionMessage.value = null;
     }
   }, 4000);
+};
+
+const investigatorName = computed(() => {
+  if (!caseItem.value) return 'Investigator';
+  if (caseItem.value.assignedTo && caseItem.value.assignedTo.length > 0) {
+    const a = caseItem.value.assignedTo[0];
+    return typeof a === 'object' ? (a.name || a.username) : a;
+  }
+  if (caseItem.value.createdBy) {
+    const c = caseItem.value.createdBy;
+    return typeof c === 'object' ? (c.name || c.username) : c;
+  }
+  return 'Special Agent';
+});
+
+const computedPriority = computed(() => {
+  if (!caseItem.value) return 'NORMAL';
+  if (caseItem.value.priority) return caseItem.value.priority;
+  if (caseItem.value.status === 'REVIEW') return 'CRITICAL';
+  if (caseItem.value.status === 'INVESTIGATING') return 'HIGH';
+  return 'NORMAL';
+});
+
+const priorityBadgeClass = (priority) => {
+  switch (priority) {
+    case 'CRITICAL': return 'bg-rose-950 text-rose-300 border border-rose-700';
+    case 'HIGH': return 'bg-amber-950 text-amber-300 border border-amber-700';
+    default: return 'bg-blue-950 text-blue-300 border border-blue-700';
+  }
 };
 
 const statusBadgeClass = (status) => {
@@ -865,6 +1537,95 @@ const timelineMarkerClass = (action) => {
   if (action?.includes('STATUS')) return 'bg-amber-500';
   return 'bg-gray-500';
 };
+
+// Overview / KPI Computed Values
+const verifiedEvidenceCount = computed(() => evidence.value.filter(e => e.verificationState === 'VERIFIED').length);
+const unverifiedEvidenceCount = computed(() => evidence.value.filter(e => !e.verificationState || e.verificationState === 'UNVERIFIED').length);
+const disputedOrRejectedCount = computed(() => evidence.value.filter(e => e.verificationState === 'DISPUTED' || e.verificationState === 'REJECTED').length);
+
+const verificationRatio = computed(() => {
+  if (evidence.value.length === 0) return 0;
+  return Math.round((verifiedEvidenceCount.value / evidence.value.length) * 100);
+});
+
+// Ranked Hypotheses (highest score first)
+const rankedHypotheses = computed(() => {
+  return [...hypotheses.value].sort((a, b) => (b.score || 0) - (a.score || 0));
+});
+
+const leadingHypothesis = computed(() => {
+  return rankedHypotheses.value.length > 0 ? rankedHypotheses.value[0] : null;
+});
+
+// Contextual Needs Attention Items
+const attentionItems = computed(() => {
+  const items = [];
+  
+  // Unverified evidence items
+  const unverified = evidence.value.filter(e => !e.verificationState || e.verificationState === 'UNVERIFIED');
+  if (unverified.length > 0) {
+    items.push({
+      type: 'VERIFICATION',
+      title: `${unverified.length} Evidence Items Awaiting Verification`,
+      description: 'Unverified items currently contribute at reduced (0.5x) weight.',
+      severity: 'medium',
+      actionLabel: 'Review Evidence',
+      action: () => quickReviewPendingEvidence()
+    });
+  }
+
+  // Disputed evidence items
+  const disputed = evidence.value.filter(e => e.verificationState === 'DISPUTED');
+  if (disputed.length > 0) {
+    items.push({
+      type: 'DISPUTE',
+      title: `${disputed.length} Disputed Evidence Items`,
+      description: 'Disputed evidence reduces theory confidence. Re-examine sources.',
+      severity: 'high',
+      actionLabel: 'Inspect Disputed',
+      action: () => {
+        tab.value = 'evidence';
+        evidenceStateFilter.value = 'DISPUTED';
+      }
+    });
+  }
+
+  // Hypotheses with no links
+  const unlinkedHyp = hypotheses.value.filter(h => !h.explainability || h.explainability.length === 0);
+  if (unlinkedHyp.length > 0) {
+    items.push({
+      type: 'UNLINKED',
+      title: `${unlinkedHyp.length} Hypotheses Without Linked Evidence`,
+      description: 'Formulated theories require supporting/contradicting evidence to calculate confidence.',
+      severity: 'medium',
+      actionLabel: 'Link Evidence',
+      action: () => openLinkEvidenceModal(unlinkedHyp[0]._id)
+    });
+  }
+
+  return items;
+});
+
+const caseHealthText = computed(() => {
+  if (attentionItems.value.length === 0 && hypotheses.value.length > 0) return 'Consensus Stable';
+  if (unverifiedEvidenceCount.value > 0) return 'Verification Pending';
+  if (disputedOrRejectedCount.value > 0) return 'Disputed Artifacts';
+  return 'Active Investigation';
+});
+
+const caseHealthBoxClass = computed(() => {
+  if (attentionItems.value.length === 0 && hypotheses.value.length > 0) return 'bg-emerald-950/70 border-emerald-800 text-emerald-300';
+  if (disputedOrRejectedCount.value > 0) return 'bg-rose-950/70 border-rose-800 text-rose-300';
+  return 'bg-amber-950/70 border-amber-800 text-amber-300';
+});
+
+const caseHealthDotClass = computed(() => {
+  if (attentionItems.value.length === 0 && hypotheses.value.length > 0) return 'bg-emerald-400';
+  if (disputedOrRejectedCount.value > 0) return 'bg-rose-400';
+  return 'bg-amber-400';
+});
+
+const caseAuditLogs = computed(() => timelineLogs.value);
 
 // Client-side computed for evidence searching & pagination
 const filteredEvidence = computed(() => {
@@ -962,6 +1723,15 @@ const updateStatus = async () => {
   }
 };
 
+const advanceCaseLifecycle = async () => {
+  const lifecycleOrder = ['DRAFT', 'OPEN', 'INVESTIGATING', 'REVIEW', 'RESOLVED', 'ARCHIVED'];
+  const currentIndex = lifecycleOrder.indexOf(caseItem.value.status);
+  if (currentIndex >= 0 && currentIndex < lifecycleOrder.length - 1) {
+    caseItem.value.status = lifecycleOrder[currentIndex + 1];
+    await updateStatus();
+  }
+};
+
 const verifyEvidenceItem = async (evidenceId, newState) => {
   verifyingId.value = evidenceId;
   try {
@@ -970,8 +1740,11 @@ const verifyEvidenceItem = async (evidenceId, newState) => {
       body: JSON.stringify({ verificationState: newState })
     });
     if (res.success) {
-      showNotification(`Evidence status updated to ${newState}`);
+      showNotification(`Evidence state updated to ${newState}`);
       await fetchCaseData();
+      if (selectedEvidenceDetail.value && selectedEvidenceDetail.value._id === evidenceId) {
+        selectedEvidenceDetail.value.verificationState = newState;
+      }
     } else {
       showNotification(res.error || 'Failed to verify evidence', 'error');
     }
@@ -1003,7 +1776,7 @@ const submitAddEvidence = async () => {
       body: JSON.stringify(evidenceForm.value)
     });
     if (res.success) {
-      showNotification('Evidence added successfully');
+      showNotification('Evidence ingested successfully');
       showAddEvidenceModal.value = false;
       await fetchCaseData();
     } else {
@@ -1033,7 +1806,7 @@ const submitCreateHypothesis = async () => {
       body: JSON.stringify(hypothesisForm.value)
     });
     if (res.success) {
-      showNotification('Hypothesis created successfully');
+      showNotification('Hypothesis formulated successfully');
       showCreateHypothesisModal.value = false;
       await fetchCaseData();
     } else {
@@ -1047,10 +1820,10 @@ const submitCreateHypothesis = async () => {
   }
 };
 
-const openLinkEvidenceModal = (hypothesisId) => {
+const openLinkEvidenceModal = (hypothesisId = null, evidenceId = null) => {
   linkForm.value = {
     hypothesisId: hypothesisId || (hypotheses.value[0] ? hypotheses.value[0]._id : ''),
-    evidenceId: evidence.value[0] ? evidence.value[0]._id : '',
+    evidenceId: evidenceId || (evidence.value[0] ? evidence.value[0]._id : ''),
     type: 'SUPPORT',
     strength: 7
   };
@@ -1085,6 +1858,50 @@ const submitLinkEvidence = async () => {
   } finally {
     submittingModal.value = false;
   }
+};
+
+const quickReviewPendingEvidence = () => {
+  tab.value = 'evidence';
+  evidenceStateFilter.value = 'UNVERIFIED';
+};
+
+const handleAttentionAction = (item) => {
+  if (item.action) item.action();
+};
+
+const openEvidenceDetailDrawer = (ev) => {
+  selectedEvidenceDetail.value = ev;
+};
+
+const openExplainabilityModal = (hyp) => {
+  selectedExplainHypothesis.value = hyp;
+};
+
+const getEvidenceRelationshipCount = (evidenceId) => {
+  return caseRelationships.value.filter(r => String(r.evidenceId) === String(evidenceId)).length;
+};
+
+const getHypothesisRelationCount = (hypId, type) => {
+  return caseRelationships.value.filter(r => String(r.hypothesisId) === String(hypId) && r.type === type).length;
+};
+
+const getStrongestEvidenceTitle = (hyp) => {
+  if (!hyp.explainability || hyp.explainability.length === 0) return 'No linked evidence';
+  return hyp.explainability[0].split(':')[1] || hyp.explainability[0];
+};
+
+const getLinkedHypothesesForEvidence = (evId) => {
+  const rels = caseRelationships.value.filter(r => String(r.evidenceId) === String(evId));
+  return rels.map(r => {
+    const h = hypotheses.value.find(hyp => String(hyp._id) === String(r.hypothesisId));
+    return {
+      _id: r._id,
+      hypothesisId: r.hypothesisId,
+      hypothesisTitle: h ? h.title : 'Hypothesis',
+      type: r.type,
+      strength: r.strength
+    };
+  });
 };
 
 // Evidence Map Graph helpers
