@@ -15,4 +15,7 @@ router.route('/:id')
 router.route('/:id/status')
   .put(authorize('Investigator', 'Reviewer', 'Admin'), caseController.updateCaseStatus);
 
+router.route('/:id/timeline')
+  .get(caseController.getCaseTimeline);
+
 module.exports = router;

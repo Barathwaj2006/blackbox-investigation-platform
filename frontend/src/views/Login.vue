@@ -1,61 +1,52 @@
 <template>
-  <div class="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div class="min-h-screen bg-charcoal-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-white">
+      <h2 class="mt-6 text-center text-3xl font-light text-white tracking-widest uppercase">
         BlackBox
       </h2>
-      <p class="mt-2 text-center text-sm text-gray-400">
-        Digital Evidence Investigation Platform
+      <p class="mt-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-widest">
+        Forensic Investigation Workspace
       </p>
     </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-700">
+    <div class="mt-12 sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="bg-charcoal-800 py-8 px-4 shadow-2xl sm:rounded border border-charcoal-700 sm:px-10">
         <form class="space-y-6" @submit.prevent="handleLogin">
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-300">
-              Username
+            <label for="username" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Operator ID
             </label>
             <div class="mt-1">
-              <input id="username" v-model="username" name="username" type="text" required class="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white">
+              <input id="username" v-model="username" name="username" type="text" required class="appearance-none block w-full px-3 py-2 border border-charcoal-600 rounded shadow-sm placeholder-charcoal-600 focus:outline-none focus:ring-1 focus:ring-electric focus:border-electric sm:text-sm bg-charcoal-900 text-white font-mono">
             </div>
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-300">
-              Password
+            <label for="password" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Passcode
             </label>
             <div class="mt-1">
-              <input id="password" v-model="password" name="password" type="password" required class="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white">
+              <input id="password" v-model="password" name="password" type="password" required class="appearance-none block w-full px-3 py-2 border border-charcoal-600 rounded shadow-sm placeholder-charcoal-600 focus:outline-none focus:ring-1 focus:ring-electric focus:border-electric sm:text-sm bg-charcoal-900 text-white font-mono">
             </div>
           </div>
 
-          <div v-if="error" class="text-red-500 text-sm">
+          <div v-if="error" class="text-danger text-xs font-mono">
             {{ error }}
           </div>
 
-          <div>
-            <button type="submit" :disabled="loading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900">
-              {{ loading ? 'Signing in...' : 'Sign in' }}
+          <div class="pt-2">
+            <button type="submit" :disabled="loading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded shadow-sm text-xs font-bold uppercase tracking-wider text-charcoal-900 bg-white hover:bg-gray-200 focus:outline-none transition-colors">
+              {{ loading ? 'AUTHENTICATING...' : 'AUTHENTICATE' }}
             </button>
           </div>
         </form>
         
-        <div class="mt-6">
-          <div class="relative">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-600"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-gray-800 text-gray-400">
-                Demo Accounts (pw: demo)
-              </span>
-            </div>
-          </div>
-          <div class="mt-6 grid grid-cols-3 gap-3">
-            <button @click="fillDemo('investigator')" class="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600">Investigator</button>
-            <button @click="fillDemo('reviewer')" class="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600">Reviewer</button>
-            <button @click="fillDemo('admin')" class="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600">Admin</button>
+        <div class="mt-10 pt-6 border-t border-charcoal-700">
+          <p class="text-center text-xs font-semibold text-gray-600 uppercase tracking-widest mb-4">Demo Access Profiles</p>
+          <div class="grid grid-cols-3 gap-3">
+            <button @click="fillDemo('investigator')" class="w-full inline-flex justify-center py-1.5 px-4 border border-charcoal-600 rounded text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:border-charcoal-500 transition-colors">Investigator</button>
+            <button @click="fillDemo('reviewer')" class="w-full inline-flex justify-center py-1.5 px-4 border border-charcoal-600 rounded text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:border-charcoal-500 transition-colors">Reviewer</button>
+            <button @click="fillDemo('admin')" class="w-full inline-flex justify-center py-1.5 px-4 border border-charcoal-600 rounded text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:border-charcoal-500 transition-colors">Admin</button>
           </div>
         </div>
       </div>

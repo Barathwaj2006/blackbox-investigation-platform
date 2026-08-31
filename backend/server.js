@@ -50,22 +50,20 @@ async function startServer() {
     const User = require('./models/User');
     const count = await User.countDocuments();
     if (count === 0) {
-      console.log('Seeding demo database...');
-      const admin = await User.create({ username: 'admin', password: 'demo', name: 'Admin', role: 'Admin' });
-      const investigator = await User.create({ username: 'investigator', password: 'demo', name: 'Investigator', role: 'Investigator' });
-      
-      const Case = require('./models/Case');
-      const Evidence = require('./models/Evidence');
-      const Hypothesis = require('./models/Hypothesis');
-      const EvidenceRelationship = require('./models/EvidenceRelationship');
-      const { calculateHypothesisScore } = require('./utils/scoringEngine');
-
-      const c1 = await Case.create({ title: 'Operation Phantom', description: 'Sample case data', status: 'INVESTIGATING', createdBy: admin._id });
-      const e1 = await Evidence.create({ caseId: c1._id, title: 'Server Logs', verificationState: 'VERIFIED', confidenceScore: 90, uploadedBy: investigator._id });
-      const h1 = await Hypothesis.create({ caseId: c1._id, title: 'External Attack', createdBy: investigator._id });
-      await EvidenceRelationship.create({ hypothesisId: h1._id, evidenceId: e1._id, type: 'SUPPORT', strength: 8, createdBy: investigator._id });
-      await calculateHypothesisScore(h1._id);
+      console.log('Seeding demo database from seed.js...');
+      const { seedDemo } = require('./seed');
+      await seedDemo();
     }
+    
+    app.post('/api/admin/reset-demo', async (req, res) => {
+       try {
+          const { seedDemo } = require('./seed');
+          await seedDemo();
+          res.json({ success: true, message: 'Demo reset successfully' });
+       } catch(e) {
+          res.status(500).json({ success: false, error: e.message });
+       }
+    });
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
