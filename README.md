@@ -51,36 +51,61 @@ The investigator starts with several evidence artifacts ranging from physical ba
 
 When evidence is verified, the investigation score changes dynamically. BlackBox records exactly *why* the score changed. The investigator can then review the competing theories, inspect the interactive evidence network map, follow the investigation timeline, and eventually resolve the case cleanly.
 
+## Investigation Workflow
+
+```mermaid
+graph TD
+    A[CASE] --> B[EVIDENCE]
+    B --> C[VERIFICATION]
+    C --> D[RELATIONSHIPS]
+    D --> E[HYPOTHESES]
+    E --> F[SCORING]
+    F --> G[REVIEW]
+    G --> H[RESOLUTION]
+    
+    style A fill:#1a1a1a,stroke:#333
+    style B fill:#1a1a1a,stroke:#333
+    style C fill:#1a1a1a,stroke:#333
+    style D fill:#1a1a1a,stroke:#333
+    style E fill:#1a1a1a,stroke:#333
+    style F fill:#1a1a1a,stroke:#333
+    style G fill:#1a1a1a,stroke:#333
+    style H fill:#1a1a1a,stroke:#333
+```
+*Note: Verification state directly scales evidence reliability. Evidence relationships can be SUPPORT (increases score) or CONTRADICT (decreases score).*
+
 ## Screenshots
 
-*(Screenshots to be added: Command Center, Case Overview, Evidence Dossier, Competing Hypotheses, Evidence Map, Timeline, Review / Resolution)*
+*(Screenshots to be captured and added to docs/screenshots: Command Center, Case Overview, Evidence Dossier, Competing Hypotheses, Evidence Map, Timeline, Review / Resolution)*
 
 ## Architecture
 
-```text
-┌──────────────────────────┐
-│       Vue 3 Client       │
-│                          │
-│ Cases / Evidence /       │
-│ Hypotheses / Map / Audit │
-└────────────┬─────────────┘
-             │ REST API
-             ▼
-┌──────────────────────────┐
-│      Express Server      │
-│                          │
-│ Auth • RBAC • Controllers│
-│ Scoring • Audit • Routes │
-└────────────┬─────────────┘
-             │
-             ▼
-┌──────────────────────────┐
-│       MongoDB Atlas      │
-│                          │
-│ Cases • Evidence •       │
-│ Hypotheses • History •   │
-│ Audit Logs               │
-└──────────────────────────┘
+```mermaid
+graph TD
+    subgraph Client
+        V[Vue 3 Frontend]
+        V --> |Cases, Evidence, Map, Timeline| V
+    end
+
+    subgraph Server
+        E[Express REST API]
+        E --> Auth[Authentication & RBAC]
+        E --> Logic[Business Logic]
+        E --> Score[Deterministic Scoring Engine]
+        E --> Audit[Immutable Audit Logs]
+    end
+
+    subgraph Persistence
+        M[(MongoDB Atlas)]
+        M --> |Cases, Evidence, Hypotheses, History| M
+    end
+
+    V <-->|JSON over HTTP| E
+    E <-->|Mongoose ODM| M
+    
+    style V fill:#1a1a1a,stroke:#4ade80
+    style E fill:#1a1a1a,stroke:#60a5fa
+    style M fill:#1a1a1a,stroke:#10b981
 ```
 
 *(Note: The platform features a zero-config in-memory fallback for immediate demonstration without a local MongoDB instance).*
