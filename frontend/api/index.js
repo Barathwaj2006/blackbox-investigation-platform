@@ -1,1 +1,1 @@
-const app = require("../../backend/app"); module.exports = app;
+import { createRequire } from "module"; const require = createRequire(import.meta.url); let app; try { app = require("../backend/app"); } catch(e1) { try { app = require("./backend/app"); } catch(e2) { app = require("../../backend/app"); } } export default function handler(req, res) { return app(req, res); }
